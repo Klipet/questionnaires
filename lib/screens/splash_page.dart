@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:questionnaires/screens/questionnaires.dart';
+import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import '../anmation/amination_image.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -43,7 +44,7 @@ class _Splash extends State<Splash> {
           'Basic ' + base64Encode(utf8.encode('$username:$password'));
       var getResponse = await http.get(
           Uri.parse(
-              'https://dev.edi.md/ISNPSAPI/Mobile/GetQuestionnaires?LicenseID=$license'),
+              urlQestionaries + license!),
           headers: <String, String>{'authorization': basicAuth});
       if (getResponse.statusCode == 200) {
         final Map<String, dynamic> responseDate = json.decode(getResponse.body);

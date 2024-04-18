@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:questionnaires/screens/questionnaires.dart';
 import 'package:questionnaires/util/colors.dart';
+import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 
 class License extends StatefulWidget {
@@ -59,7 +60,7 @@ class _License extends State<License> {
       final String basicAuth =
           'Basic ' + base64Encode(utf8.encode('$username:$password'));
       var getResponse = await http.get( Uri.parse(
-          'https://dev.edi.md/ISNPSAPI/Mobile/ActivateDevice?ActivationCode=$code'),
+          urlActivate + code),
       headers: <String, String>{ 'authorization': basicAuth});
       if (getResponse.statusCode == 200) {
         final Map<String, dynamic> responseDate = json.decode(getResponse.body);

@@ -20,7 +20,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  runApp(ChangeNotifierProvider<LocaleProvider>(
+  runApp(ChangeNotifierProvider(
     create: (context) => LocaleProvider(),
     child: const MyApp(),
   ));
@@ -35,9 +35,10 @@ class MyApp extends StatelessWidget {
       return MaterialApp(
         routes: {
           '/questionaries':(context) => const Questionnaires(),
+          '/license':(context) => const License(),
           '/question': (context) => const QuestionScreen(),
         },
-        locale: Provider.of<LocaleProvider>(context).locale,
+      //  locale: Provider.of<LocaleProvider>(context).locale,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
