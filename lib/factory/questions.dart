@@ -1,135 +1,150 @@
-/// YApi QuickType插件生成，具体参考文档:https://plugins.jetbrains.com/plugin/18847-yapi-quicktype/documentation
 
-import 'dart:convert';
 
-Questions questionsFromJson(String str) => Questions.fromJson(json.decode(str));
+class Questionaires {
+    Questionaires? questionnaire;
+    String? errorMessage;
+    String? errorName;
+    int? errorCode;
 
-String questionsToJson(Questions data) => json.encode(data.toJson());
+    Questionaires(
+        {this.questionnaire, this.errorMessage, this.errorName, this.errorCode});
 
-class Questions {
-    Questions({
-        required this.questionnaire,
-        required this.errorName,
-        required this.errorMessage,
-        required this.errorCode,
-    });
+    Questionaires.fromJson(Map<String, dynamic> json) {
+        questionnaire = json['questionnaire'] != null
+            ? new Questionaires.fromJson(json['questionnaire'])
+            : null;
+        errorMessage = json['errorMessage'];
+        errorName = json['errorName'];
+        errorCode = json['errorCode'];
+    }
 
-    Questionnaire questionnaire;
-    String errorName;
-    String errorMessage;
-    int errorCode;
-
-    factory Questions.fromJson(Map<dynamic, dynamic> json) => Questions(
-        questionnaire: Questionnaire.fromJson(json["questionnaire"]),
-        errorName: json["errorName"],
-        errorMessage: json["errorMessage"],
-        errorCode: json["errorCode"],
-    );
-
-    Map<dynamic, dynamic> toJson() => {
-        "questionnaire": questionnaire.toJson(),
-        "errorName": errorName,
-        "errorMessage": errorMessage,
-        "errorCode": errorCode,
-    };
+    Map<String, dynamic> toJson() {
+        final Map<String, dynamic> data = new Map<String, dynamic>();
+        if (this.questionnaire != null) {
+            data['questionnaire'] = this.questionnaire!.toJson();
+        }
+        data['errorMessage'] = this.errorMessage;
+        data['errorName'] = this.errorName;
+        data['errorCode'] = this.errorCode;
+        return data;
+    }
 }
 
 class Questionnaire {
-    Questionnaire({
-        required this.name,
-        required this.questions,
-        required this.oid,
-        required this.createDate,
-        required this.status,
-    });
+    int? oid;
+    String? name;
+    List<Questions>? questions;
+    String? createDate;
+    Null? updateDate;
+    int? status;
 
-    String name;
-    List<Question> questions;
-    int oid;
-    DateTime createDate;
-    int status;
+    Questionnaire(
+        {this.oid,
+            this.name,
+            this.questions,
+            this.createDate,
+            this.updateDate,
+            this.status});
 
-    factory Questionnaire.fromJson(Map<dynamic, dynamic> json) => Questionnaire(
-        name: json["name"],
-        questions: List<Question>.from(json["questions"].map((x) => Question.fromJson(x))),
-        oid: json["oid"],
-        createDate: DateTime.parse(json["createDate"]),
-        status: json["status"],
-    );
+    Questionnaire.fromJson(Map<String, dynamic> json) {
+        oid = json['oid'];
+        name = json['name'];
+        if (json['questions'] != null) {
+            questions = <Questions>[];
+            json['questions'].forEach((v) {
+                questions!.add(new Questions.fromJson(v));
+            });
+        }
+        createDate = json['createDate'];
+        updateDate = json['updateDate'];
+        status = json['status'];
+    }
 
-    Map<dynamic, dynamic> toJson() => {
-        "name": name,
-        "questions": List<dynamic>.from(questions.map((x) => x.toJson())),
-        "oid": oid,
-        "createDate": createDate.toIso8601String(),
-        "status": status,
-    };
+    Map<String, dynamic> toJson() {
+        final Map<String, dynamic> data = new Map<String, dynamic>();
+        data['oid'] = this.oid;
+        data['name'] = this.name;
+        if (this.questions != null) {
+            data['questions'] = this.questions!.map((v) => v.toJson()).toList();
+        }
+        data['createDate'] = this.createDate;
+        data['updateDate'] = this.updateDate;
+        data['status'] = this.status;
+        return data;
+    }
 }
 
-class Question {
-    Question({
-        required this.comentary,
-        required this.createData,
-        required this.question,
-        required this.index,
-        required this.questionnaireId,
-        required this.id,
-        required this.gradingType,
-        this.responseVariants,
-    });
+class Questions {
+    int? id;
+    int? questionnaireId;
+    String? question;
+    int? gradingType;
+    String? comentary;
+    int? index;
+    String? createData;
+    List<ResponseVariants>? responseVariants;
 
-    String comentary;
-    DateTime createData;
-    String question;
-    int index;
-    int questionnaireId;
-    int id;
-    int gradingType;
-    List<ResponseVariant>? responseVariants;
+    Questions(
+        {this.id,
+            this.questionnaireId,
+            this.question,
+            this.gradingType,
+            this.comentary,
+            this.index,
+            this.createData,
+            this.responseVariants});
 
-    factory Question.fromJson(Map<dynamic, dynamic> json) => Question(
-        comentary: json["comentary"],
-        createData: DateTime.parse(json["createData"]),
-        question: json["question"],
-        index: json["index"],
-        questionnaireId: json["questionnaireId"],
-        id: json["id"],
-        gradingType: json["gradingType"],
-        responseVariants: json["responseVariants"] == null ? [] : List<ResponseVariant>.from(json["responseVariants"]!.map((x) => ResponseVariant.fromJson(x))),
-    );
+    Questions.fromJson(Map<String, dynamic> json) {
+        id = json['id'];
+        questionnaireId = json['questionnaireId'];
+        question = json['question'];
+        gradingType = json['gradingType'];
+        comentary = json['comentary'];
+        index = json['index'];
+        createData = json['createData'];
+        if (json['responseVariants'] != null) {
+            responseVariants = <ResponseVariants>[];
+            json['responseVariants'].forEach((v) {
+                responseVariants!.add(new ResponseVariants.fromJson(v));
+            });
+        }
+    }
 
-    Map<dynamic, dynamic> toJson() => {
-        "comentary": comentary,
-        "createData": createData.toIso8601String(),
-        "question": question,
-        "index": index,
-        "questionnaireId": questionnaireId,
-        "id": id,
-        "gradingType": gradingType,
-        "responseVariants": responseVariants == null ? [] : List<dynamic>.from(responseVariants!.map((x) => x.toJson())),
-    };
+    Map<String, dynamic> toJson() {
+        final Map<String, dynamic> data = new Map<String, dynamic>();
+        data['id'] = this.id;
+        data['questionnaireId'] = this.questionnaireId;
+        data['question'] = this.question;
+        data['gradingType'] = this.gradingType;
+        data['comentary'] = this.comentary;
+        data['index'] = this.index;
+        data['createData'] = this.createData;
+        if (this.responseVariants != null) {
+            data['responseVariants'] =
+                this.responseVariants!.map((v) => v.toJson()).toList();
+        }
+        return data;
+    }
 }
 
-class ResponseVariant {
-    ResponseVariant({
-        required this.questionId,
-        required this.response,
-        required this.id,
-    });
+class ResponseVariants {
+    int? id;
+    int? questionId;
+    String? response;
 
-    int questionId;
-    String response;
-    int id;
+    ResponseVariants({this.id, this.questionId, this.response});
 
-    factory ResponseVariant.fromJson(Map<dynamic, dynamic> json) => ResponseVariant(
-        questionId: json["questionId"],
-        response: json["response"],
-        id: json["id"],
-    );
+    ResponseVariants.fromJson(Map<String, dynamic> json) {
+        id = json['id'];
+        questionId = json['questionId'];
+        response = json['response'];
+    }
 
-    Map<dynamic, dynamic> toJson() => {
-        "questionId": questionId,
-        "response": response,
-        "id": id,
-    };
+    Map<String, dynamic> toJson() {
+        final Map<String, dynamic> data = new Map<String, dynamic>();
+        data['id'] = this.id;
+        data['questionId'] = this.questionId;
+        data['response'] = this.response;
+        return data;
+    }
 }

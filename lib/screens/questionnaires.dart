@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -62,7 +61,7 @@ class _Questionnaires extends State<Questionnaires> {
       appBar: AppBar(
         actions: [
           DropdownButton(
-              hint: const Text('Language'),
+              hint:  Text(returnDropdownButton(currentLanguageCode)),
               items: const [
                 DropdownMenuItem(
                   value: 'RO',
@@ -177,6 +176,8 @@ class _Questionnaires extends State<Questionnaires> {
                                               arguments: {
                                                 'oid':
                                                     questionnaires[index].oid,
+                                                'language':
+                                                    currentLanguageCode,
                                               },
                                             );
                                           },
@@ -294,7 +295,21 @@ class _Questionnaires extends State<Questionnaires> {
       return enName;
     }
   }
+  String returnDropdownButton(String localeCod) {
+    String enName = 'Language';
+    String roName = 'Limba';
+    String ruName = 'Язык';
+    if (localeCod == 'RO') {
+      return roName;
+    } else if (localeCod == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
 }
+
+ 
 
 List<GetQuestionnaires> parseQuestionnaires(Map<String, dynamic> responseData) {
   final List<dynamic> questionnairesJson = responseData['questionnaires'];
