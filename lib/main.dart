@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/questionaries':(context) => const Questionnaires(),
           '/license':(context) => const License(),
-          '/question': (context) => const QuestionScreen(),
+         // '/question': (context) => const QuestionScreen(),
         },
       //  locale: Provider.of<LocaleProvider>(context).locale,
         localizationsDelegates: const [
@@ -47,6 +47,7 @@ class MyApp extends StatelessWidget {
         ],
           supportedLocales: L10n.support,
           showSemanticsDebugger: false,
+          debugShowCheckedModeBanner: false,
           home: AnimatedSplashScreen(
             duration: 3000,
             backgroundColor: Colors.orange,
