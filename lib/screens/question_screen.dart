@@ -1,11 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
+import 'package:questionnaires/screens/response_screen/build_point_then_score.dart';
+import 'package:questionnaires/screens/response_screen/build_yes_no.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import 'package:http/http.dart' as http;
 import '../factory/questions.dart';
 import '../util/colors.dart';
 import '../util/const_url.dart';
+import 'response_screen/build_multiple_ansver_vriant.dart';
+import 'response_screen/build_point_five_score.dart';
+import 'response_screen/build_single_answer_varinat.dart';
 
 class QuestionScreen extends StatefulWidget {
   // const QuestionScreen({super.key});
@@ -71,25 +76,31 @@ class _QuestionScreenState extends State<QuestionScreen> {
                   return Scaffold(
                       appBar: AppBar(
                         centerTitle: true,
-                        leading: index.toInt() == 0 ? null : IconButton(
-                          onPressed: () {
-                            goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
-                          },
-                          icon: const Icon(Icons.arrow_back), iconSize: 24, color: Colors.white,
-                        ),
+                        leading: index.toInt() == 0
+                            ? null
+                            : IconButton(
+                                onPressed: () {
+                                  goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
+                                },
+                                icon: const Icon(Icons.arrow_back),
+                                iconSize: 24,
+                                color: Colors.white,
+                              ),
                         automaticallyImplyLeading: false,
                         actions: [
                           IconButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              icon: const Icon(Icons.home_outlined), color: Colors.white, iconSize: 25,),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.home_outlined),
+                            color: Colors.white,
+                            iconSize: 25,
+                          ),
                         ],
                         title: Text(
                           (index + 1).toString() + " / " + count.toString(),
-                          textAlign: TextAlign.center, style: const TextStyle(
-                          color: Colors.white
-                        ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white),
                         ),
                         backgroundColor: questionsGroupColor,
                       ),
@@ -100,75 +111,44 @@ class _QuestionScreenState extends State<QuestionScreen> {
                           : Stack(
                               children: [
                                 Center(
-                                    child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      returnLanguage(widget.language)[index],
-                                      style: const TextStyle(fontSize: 50),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        backgroundColor:
-                                            Colors.red, // foreground
-                                      ),
-                                      onPressed: () {
-                                        if (_currentPageIndex ==
-                                            questions.length - 1) {
-                                          Navigator.of(context)
-                                              .pushAndRemoveUntil(
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const Questionnaires()),
-                                                  (route) => false);
-                                        } else {
-                                          _pageViewController.nextPage(
-                                              duration: const Duration(
-                                                  microseconds: 200),
-                                              curve: Curves.easeInOut);
-                                        }
-                                      },
-                                      child: Text(
-                                          'ElevatedButton with custom foreground/background $index'),
-                                    ),
-                                  ],
-                                ))
+                                  child: buildQuestions(questionsList, questions,
+                                      widget.language, _currentPageIndex, _nextQuestion),
+                                )
                               ],
                             ));
                 },
               ));
   }
-  List<Widget> buildQuestions(List<dynamic> questions) {
-    List<Widget> questionWidgets = [];
 
-    for (var question in questions) {
-      int gradingType = question['gradingType'];
-      switch (gradingType) {
-        case 1:
-        // Вопрос с Да.нет
-          questionWidgets.add(buildYesNo(question));
-          break;
-        case 2:
-        // Вопрос с от 1 до 10
-          questionWidgets.add(buildPointThenScore(question));
-          break;
-        case 3:
-        // Вопрос с одним ответом
-          questionWidgets.add(buildSingleAnswerVarinat(question));
-          break;
-        case 4:
-        // Вопрос с множеством ответов
-          questionWidgets.add(buildMultipleAnsverVriant(question));
-          break;
-        default:
-        // Вопрос с от 1 до 5
-          questionWidgets.add(buildPointFiveScore(question));
+  void _nextQuestion() {
+    setState(() {
+      if (_currentPageIndex < questions.length - 1) {
+        _currentPageIndex++;
+        // Обновляем содержимое виджета с новым индексом
+        _pageViewController.nextPage(
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // Если достигнут конец списка вопросов, можно выполнить какие-то действия, например, показать диалоговое окно
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('End of questions'),
+            content: Text('You have reached the end of the questions.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const Questionnaires()), (route) => false),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
-    }
-
-    return questionWidgets;
+    });
   }
+
 
   void goToPreviousPage() {
     if (_currentPageIndex > 0) {
@@ -232,65 +212,43 @@ class _QuestionScreenState extends State<QuestionScreen> {
     }
     return languageNames;
   }
+  Widget buildQuestions(List<dynamic> questionsList ,List<Questionaires> questions, String language, int index, VoidCallback _next) {
+  //  for (var question in questionsList) {
+    if( index >= 0 && index < questionsList.length){
+      final question = questionsList[index];
+      int gradingType = question['gradingType'];
+      switch (gradingType) {
+        case 1:
+        // Вопрос с Да.нет
+          return YesNoVariant(
+            qestion: question, language: language, index: index, onPressed: _next,);
+          break;
+        case 2:
+        // Вопрос с от 1 до 10
+          return PointThenScore(
+            qestion: question, language: language, index: index, onPressed: _next,);
+        case 3:
+        // Вопрос с одним ответом
+          return SingleAnswerVariant(
+            qestion: question, language: language, index: index, onPressed: _next,);
+          break;
+        case 4:
+        // Вопрос с множеством ответов
+          return MulteAnsverVatinat(
+            qestion: question, language: language, index: index, onPressed: _next,);
+          break;
+        default:
+        //Вопрос с от 1 до 5
+          return PointFiveScore(
+            qestion: question, language: language, index: index, onPressed: _next,);
+      }
+    }
+    return const Center();
+    }
 
-  Widget buildYesNo(question) {
-    return Container(
-        child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          returnLanguage(widget.language)[index],
-          style: const TextStyle(fontSize: 50),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor:
-            Colors.red, // foreground
-          ),
-          onPressed: () {
-            if (_currentPageIndex ==
-                questions.length - 1) {
-              Navigator.of(context)
-                  .pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (context) =>
-                      const Questionnaires()),
-                      (route) => false);
-            } else {
-              _pageViewController.nextPage(
-                  duration: const Duration(
-                      microseconds: 200),
-                  curve: Curves.easeInOut);
-            }
-          },
-          child: Text(
-              'ElevatedButton with custom foreground/background $index'),
-        ),
-      ],
-    ));
-  }
-
-  Widget buildPointThenScore(question) {
-    return Container();
-  }
-
-  Widget buildSingleAnswerVarinat(question) {
-    return Container();
-  }
-
-  Widget buildMultipleAnsverVriant(question) {
-    return Container();
-  }
-
-  Widget buildPointFiveScore(question) {
-    return Container();
-  }
-
-  Widget buildDefaultQuestion(question) {
-    return Container();
-  }
+  //}
 }
+
 
 List<Questions> parseQuestTitle(Map<String, dynamic> responseData) {
   // Извлекаем список вопросов из карты
