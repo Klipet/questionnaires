@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:questionnaires/screens/error_screen.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
 import 'package:questionnaires/screens/response_screen/build_point_then_score.dart';
 import 'package:questionnaires/screens/response_screen/build_yes_no.dart';
@@ -8,6 +10,7 @@ import 'package:http/http.dart' as http;
 import '../factory/questions.dart';
 import '../util/colors.dart';
 import '../util/const_url.dart';
+import '../util/images.dart';
 import 'response_screen/build_multiple_ansver_vriant.dart';
 import 'response_screen/build_point_five_score.dart';
 import 'response_screen/build_single_answer_varinat.dart';
@@ -29,6 +32,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
   late List<dynamic> questionsList;
   late PageController _pageViewController;
   bool isLoading = true;
+  late bool hasError;
+  Map<String, dynamic> qestionMap = {};
   late int _currentPageIndex = 0;
 
   @override
@@ -49,78 +54,84 @@ class _QuestionScreenState extends State<QuestionScreen> {
   Widget build(BuildContext context) {
     widget.oid;
     widget.language;
-    //  final Map<String, dynamic> args =
-    //      ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    //  oid = args['oid'] as int;
-    //  language = args['language'] as String;
     String count = questions.length.toString();
     return Container(
         child: isLoading
             ? const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: questionsGroupColor),
               )
-            : PageView.builder(
-                itemCount: questions.length,
-                padEnds: false,
-                physics: NeverScrollableScrollPhysics(),
-                // Отключает возможность скроллинга через слайд
-                pageSnapping: false,
-                controller: _pageViewController,
-                onPageChanged: (int index) {
-                  // Обновите текущий индекс страницы при ее изменении
-                  setState(() {
-                    _currentPageIndex = index;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  return Scaffold(
-                      appBar: AppBar(
-                        centerTitle: true,
-                        leading: index.toInt() == 0
-                            ? null
-                            : IconButton(
-                                onPressed: () {
-                                  goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
-                                },
-                                icon: const Icon(Icons.arrow_back),
-                                iconSize: 24,
-                                color: Colors.white,
+            : Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: hasError
+                    ? ErrorScreen(language: widget.language)
+                    : PageView.builder(
+                        itemCount: questions.length,
+                        padEnds: false,
+                        physics: NeverScrollableScrollPhysics(),
+                        // Отключает возможность скроллинга через слайд
+                        pageSnapping: false,
+                        controller: _pageViewController,
+                        onPageChanged: (int index) {
+                          // Обновите текущий индекс страницы при ее изменении
+                          setState(() {
+                            _currentPageIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return Scaffold(
+                              appBar: AppBar(
+                                centerTitle: true,
+                                leading: index.toInt() == 0
+                                    ? null
+                                    : IconButton(
+                                        onPressed: () {
+                                          goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
+                                        },
+                                        icon: const Icon(Icons.arrow_back),
+                                        iconSize: 24,
+                                        color: Colors.white,
+                                      ),
+                                automaticallyImplyLeading: false,
+                                actions: [
+                                  IconButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    icon: const Icon(Icons.home_outlined),
+                                    color: Colors.white,
+                                    iconSize: 25,
+                                  ),
+                                ],
+                                title: Text(
+                                  (index + 1).toString() +
+                                      " / " +
+                                      count.toString(),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                backgroundColor: questionsGroupColor,
                               ),
-                        automaticallyImplyLeading: false,
-                        actions: [
-                          IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: const Icon(Icons.home_outlined),
-                            color: Colors.white,
-                            iconSize: 25,
-                          ),
-                        ],
-                        title: Text(
-                          (index + 1).toString() + " / " + count.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: questionsGroupColor,
-                      ),
-                      body: isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          : Stack(
-                              children: [
-                                Center(
-                                  child: buildQuestions(questionsList, questions,
-                                      widget.language, _currentPageIndex, _nextQuestion),
-                                )
-                              ],
-                            ));
-                },
-              ));
+                              body: isLoading
+                                  ? const Center(
+                                      child: CircularProgressIndicator(),
+                                    )
+                                  : Stack(
+                                      children: [
+                                        Center(
+                                          child: buildQuestions(
+                                              questionsList,
+                                              questions,
+                                              widget.language,
+                                              _currentPageIndex,
+                                              nextQuestion),
+                                        )
+                                      ],
+                                    ));
+                        },
+                      )));
   }
 
-  void _nextQuestion() {
+  void nextQuestion() {
     setState(() {
       if (_currentPageIndex < questions.length - 1) {
         _currentPageIndex++;
@@ -139,7 +150,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const Questionnaires()), (route) => false),
+                    MaterialPageRoute(
+                        builder: (context) => const Questionnaires()),
+                    (route) => false),
                 child: Text('OK'),
               ),
             ],
@@ -148,8 +161,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
       }
     });
   }
-
-
   void goToPreviousPage() {
     if (_currentPageIndex > 0) {
       _pageViewController.previousPage(
@@ -183,6 +194,19 @@ class _QuestionScreenState extends State<QuestionScreen> {
       if (responseDate['questionnaire'] != null) {
         questionsList = responseDate['questionnaire']['questions'];
         questions = parseQuestionaires(responseDate);
+        List<dynamic> allQuestions = responseDate['questionnaire']['questions'];
+        Map<String, dynamic> qestionFirst = allQuestions[0];
+        Map<String, dynamic> questionMap = jsonDecode(qestionFirst['question']);
+        String titleQestion = questionMap[widget.language];
+        if (titleQestion == '') {
+          setState(() {
+            hasError = true;
+          });
+        } else {
+          setState(() {
+            hasError = false;
+          });
+        }
         setState(() {
           isLoading = false;
         });
@@ -212,43 +236,78 @@ class _QuestionScreenState extends State<QuestionScreen> {
     }
     return languageNames;
   }
-  Widget buildQuestions(List<dynamic> questionsList ,List<Questionaires> questions, String language, int index, VoidCallback _next) {
-  //  for (var question in questionsList) {
-    if( index >= 0 && index < questionsList.length){
+
+  Widget buildQuestions(
+      List<dynamic> questionsList,
+      List<Questionaires> questions,
+      String language,
+      int index,
+      VoidCallback _next) {
+    var totalQestion = questions.length;
+    if (index >= 0 && index < questionsList.length) {
       final question = questionsList[index];
       int gradingType = question['gradingType'];
       switch (gradingType) {
         case 1:
-        // Вопрос с Да.нет
+          // Вопрос с Да.нет
           return YesNoVariant(
-            qestion: question, language: language, index: index, onPressed: _next,);
+              totalQuestionsCount: totalQestion,
+              qestion: question,
+              language: language,
+              index: index,
+              onPressed: _next,
+              id: widget.oid,
+              onPressedController: _pageViewController);
           break;
         case 2:
-        // Вопрос с от 1 до 10
+          // Вопрос с от 1 до 10
           return PointThenScore(
-            qestion: question, language: language, index: index, onPressed: _next,);
+              totalQuestionsCount: totalQestion,
+              qestion: question,
+              language: language,
+              index: index,
+              onPressed: _next,
+              id: widget.oid,
+              onPressedController: _pageViewController);
         case 3:
-        // Вопрос с одним ответом
+          // Вопрос с одним ответом
           return SingleAnswerVariant(
-            qestion: question, language: language, index: index, onPressed: _next,);
+              totalQuestionsCount: totalQestion,
+              qestion: question,
+              language: language,
+              index: index,
+              onPressed: _next,
+              id: widget.oid,
+              onPressedController: _pageViewController);
           break;
         case 4:
-        // Вопрос с множеством ответов
+          // Вопрос с множеством ответов
           return MulteAnsverVatinat(
-            qestion: question, language: language, index: index, onPressed: _next,);
+              totalQuestionsCount: totalQestion,
+              qestion: question,
+              language: language,
+              index: index,
+              onPressed: _next,
+              id: widget.oid,
+              onPressedController: _pageViewController);
           break;
         default:
-        //Вопрос с от 1 до 5
+          //Вопрос с от 1 до 5
           return PointFiveScore(
-            qestion: question, language: language, index: index, onPressed: _next,);
+              totalQuestionsCount: totalQestion,
+              qestion: question,
+              language: language,
+              index: index,
+              onPressed: _next,
+              id: widget.oid,
+              onPressedController: _pageViewController);
       }
     }
     return const Center();
-    }
+  }
 
-  //}
+//}
 }
-
 
 List<Questions> parseQuestTitle(Map<String, dynamic> responseData) {
   // Извлекаем список вопросов из карты

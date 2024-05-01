@@ -82,32 +82,14 @@ class _Questionnaires extends State<Questionnaires> {
                   languageProvider.changeLanguage(newLanguageCode);
                 }
               }
-            //   items: _languages
-            //       .map<DropdownMenuItem<LanguageModel>>((LanguageModel value) {
-            //     return DropdownMenuItem<LanguageModel>(
-            //       value: value,
-            //       child: Text(
-            //         value.name!,
-            //       ),
-            //     );
-            //   }).toList(),
-            //   hint: Text(
-            //     AppLocalizations.of(context)!.hintDropDawn,
-            //   ),
-            //   onChanged: (LanguageModel? newValue) {
-            //     setState(() {
-            //       returnLanguage();
-            //       _choseValue = newValue;
-            //       Provider.of<LocaleProvider>(context, listen: false)
-            //           .setLocale(Locale(newValue!.code!));
-            //     });
-            //   },
           ),
         ],
       ),
       body: isLoading
           ? const Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(
+            color: questionsGroupColor
+        ),
       )
           : Padding(
           padding: EdgeInsets.only(top: 10),

@@ -1,24 +1,29 @@
 import 'dart:convert';
-
-import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-
+import 'package:questionnaires/util/const_url.dart';
+import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import '../../util/colors.dart';
 import '../questionnaires.dart';
 
 class MulteAnsverVatinat extends StatefulWidget {
   // const MulteAnsverVatinat({super.key});
   final String language;
+  final int id;
+  final int totalQuestionsCount;
   final Map<String, dynamic> qestion;
   final int index;
   final VoidCallback onPressed;
+  final PageController onPressedController;
 
   const MulteAnsverVatinat(
       {super.key,
       required this.language,
+      required this.id,
       required this.index,
       required this.qestion,
-      required this.onPressed});
+      required this.onPressed,
+      required this.onPressedController, required this.totalQuestionsCount});
 
   @override
   State<MulteAnsverVatinat> createState() => _MulteAnsverVatinatState();
@@ -26,10 +31,12 @@ class MulteAnsverVatinat extends StatefulWidget {
 
 class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
   late List<bool> isCheckedList;
+  late List<dynamic> responseChec;
 
   @override
   void initState() {
     isCheckedList = List.generate(countColunm(), (index) => false);
+    responseChec = [];
     super.initState();
   }
 
@@ -79,6 +86,9 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                         setState(() {
                           isCheckedList[index] = !isCheckedList[
                               index]; // Изменяем состояние isChecked при нажатии на кнопку
+                          responseChec
+                              .add(widget.qestion['responseVariants'][index]);
+                          print("Qestion Map : ${responseChec[0]}");
                         });
                       },
                       icon: Icon(
@@ -107,7 +117,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Padding(
-                padding: EdgeInsets.only(top: 20, bottom: 20),
+                padding: EdgeInsets.only(top: 20, bottom: 64),
                 child: ElevatedButton(
                   onPressed: () {
                     _onNextPressed();
@@ -220,8 +230,23 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(returnDialogTitle(widget.language)),
-          content: Text(returnDialogMessage(widget.language)),
+          alignment: Alignment.center,
+          title: Text(
+            returnDialogTitle(widget.language),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 24,
+              fontFamily: 'RobotoBlack',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(returnDialogMessage(widget.language),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontFamily: 'RobotoRegular',
+                fontWeight: FontWeight.w400,
+              )),
           actions: [
             ElevatedButton(
               style: ButtonStyle(
@@ -246,7 +271,15 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                 ),
               ),
               onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
+              child: const Text(
+                'Ok',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontFamily: 'RobotoRegular',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
             ),
           ],
         ),
@@ -279,6 +312,156 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
       return enName;
     }
   }
-}
 
-class _sendResponseToServer {}
+  void _sendResponseToServer() async {
+    var shered = await SecureSharedPref.getInstance();
+    var license = await shered.getString("licenseID");
+    var ststusCodeError = 400;
+    print("Qestion Map : ${widget.qestion}");
+// Получаем выбранные варианты ответов на основе isCheckedList
+    try {
+      for (int i = 0; i < responseChec.length; i++) {
+        var id = responseChec[i]['id'];
+        var responseVariantId = responseChec[i]['questionId'];
+        Map<String, dynamic> requestBody = {
+          'oid': 0,
+          'questionnaireId': widget.qestion['questionnaireId'],
+          'responses': [
+            {
+              'id': 0,
+              'questionId': responseVariantId.toInt(),
+              'responseVariantId': id.toInt(),
+              // Уточните, какой ID нужно использовать
+              'alternativeResponse': '',
+              // Объединяем выбранные варианты в строку
+              'comentary': '',
+              // Пустая строка, замените на комментарий, если необходимо
+              'gradingType': widget.qestion['gradingType'].toInt(),
+              // Уточните, какой тип оценки нужно использовать
+              'dateResponse': DateTime.now().toIso8601String(),
+              // Текущая дата и время
+            }
+          ],
+          'licenseId': license
+        };
+        // Отправляем POST-запрос на сервер
+        final String basicAuth =
+            'Basic ' + base64Encode(utf8.encode('$username:$password'));
+        Uri url = Uri.parse(postResponse); // Замените на ваш URL
+        try {
+          final response =
+              await http.post(url, body: jsonEncode(requestBody), headers: {
+            'Authorization': basicAuth,
+            "Accept": "application/json",
+            "content-type": "application/json"
+          });
+          if (response.statusCode == 200) {
+            // Обработка успешного ответа от сервера
+            print('Response sent successfully.');
+          } else {
+            // Обработка ошибки
+            print(
+                'Failed to send response. Status code: ${response.statusCode}');
+          }
+        } catch (e) {
+          // Обработка ошибок сети
+          print('Error sending response: $e');
+        }
+      }
+    } catch (e) {
+      print('Error sending response: $e');
+    } finally {
+      if (widget.index + 1 != widget.totalQuestionsCount) {
+        // Если это последний вопрос, переходим на другую страницу
+        widget.onPressedController.nextPage(
+          duration: const Duration(microseconds: 200),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // Если ни один вариант не выбран, выводим сообщение об ошибке
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            alignment: Alignment.center,
+            title: Text(
+              returnDialogTitleFinish(widget.language),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontFamily: 'RobotoBlack',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              returnDialogMessageFinish(widget.language),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontFamily: 'RobotoRegular',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ButtonStyle(
+                  alignment: Alignment.center,
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  fixedSize: MaterialStateProperty.all(const Size(624, 57)),
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed)) {
+                        return Colors.green;
+                      }
+                      return questionsGroupColor;
+                    },
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (context) => const Questionnaires()),
+                    (route) => false),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontFamily: 'RobotoRegular',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+  String returnDialogTitleFinish(String localeCod) {
+    String enName = 'Thank you';
+    String roName = 'Mulțumesc';
+    String ruName = 'Спасибо';
+    if (localeCod == 'RO') {
+      return roName;
+    } else if (localeCod == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
+  String returnDialogMessageFinish(String localeCod) {
+    String enName = 'Survey completed';
+    String roName = 'Chestionarul este încheiat';
+    String ruName = 'Опрос завершен';
+    if (localeCod == 'RO') {
+      return roName;
+    } else if (localeCod == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
+}
