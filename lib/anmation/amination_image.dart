@@ -5,7 +5,7 @@ class DelayedAnimation extends StatefulWidget {
   final Widget child;
   final Duration delay;
 
-  DelayedAnimation({required this.delay, required this.child});
+  const DelayedAnimation({super.key, required this.delay, required this.child});
 
   @override
   _DelayedAnimationState createState() => _DelayedAnimationState();
@@ -19,11 +19,11 @@ class _DelayedAnimationState extends State<DelayedAnimation> with SingleTickerPr
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(microseconds: 5),
       vsync: this,
     );
     _animation = Tween<Offset>(
-      begin: Offset(0.0, 0.5),
+      begin: const Offset(0.0, 0.5),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
@@ -53,12 +53,12 @@ class _DelayedAnimationState extends State<DelayedAnimation> with SingleTickerPr
 class AnimatedImage extends StatelessWidget {
   final String image;
 
-  AnimatedImage({required this.image});
+  const AnimatedImage({super.key, required this.image});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8.0),
       child: Image.asset(
         image,
       ),

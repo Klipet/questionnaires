@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:questionnaires/util/const_url.dart';
@@ -49,15 +51,17 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
     String title = returnQestinName(widget.language);
     String buttonText = returnButtonNext(widget.language);
 
-    return Center(
-        child: Padding(
+    return Scaffold(
+        body: Padding(
       padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AutoSizeText(
             title,
+            minFontSize: 38,
+            maxLines: 2,
             style: const TextStyle(
               fontSize: 48,
               fontFamily: 'RobotoBlack',
@@ -65,7 +69,9 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('($coment)',
+          AutoSizeText(coment,
+              minFontSize: 22,
+              maxLines: 2,
               style: const TextStyle(
                 fontSize: 32,
                 fontFamily: 'RobotoRegular',
@@ -73,55 +79,62 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
               )),
           const SizedBox(height: 50),
           Expanded(
-              child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisExtent: 125,
-            ),
-            itemCount: countColunm(),
-            itemBuilder: (context, index) {
-              return Container(
-                padding: EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          int selectedIndexTemp = index;
-                          selectedIndex =
-                              selectedIndexTemp; // Изменяем состояние isChecked при нажатии на кнопку
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisExtent: 90,
+              ),
+              itemCount: countColunm(),
+              itemBuilder: (context, index) {
+                return Container(
+                  padding: const EdgeInsets.all(8.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        int selectedIndexTemp = index;
+                        selectedIndex = selectedIndexTemp;
 
-                          responseChec.clear();
-                          responseChec.add(widget.qestion['responseVariants']
-                              [selectedIndexTemp]);
-                          print("Response Map : ${responseChec[0]}");
-                        });
-                      },
-                      icon: Icon(
-                        selectedIndex == index
-                            ? Icons.check_circle
-                            : Icons.circle_outlined,
-                        color: selectedIndex == index
-                            ? questionsGroupColor
-                            : questionsGroupColor,
-                        size: 56,
-                      ),
+                        responseChec.clear();
+                        responseChec.add(widget.qestion['responseVariants']
+                        [selectedIndexTemp]);
+                        print("Response Map : ${responseChec[0]}");
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: null,
+                          icon: Icon(
+                            selectedIndex == index
+                                ? Icons.check_circle
+                                : Icons.circle_outlined,
+                            color: selectedIndex == index
+                                ? questionsGroupColor
+                                : questionsGroupColor,
+                            size: 56,
+                          ),
+                        ),
+                        SizedBox(width: 8.0),
+                        Flexible(
+                          child: AutoSizeText(
+                            returnResponse(widget.language)[index],
+                            minFontSize: 20,
+                            maxLines: 2,
+                            maxFontSize: 32,
+                            overflow: TextOverflow.clip,
+                            style: const TextStyle(
+                              fontFamily: 'RobotoRegular',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        )
+                      ],
                     ),
-                    SizedBox(width: 8.0),
-                    // Пространство между иконкой и текстом
-                    Text(
-                      returnResponse(widget.language)[index],
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontFamily: 'RobotoRegular',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          )),
+                  ),
+                );
+              },
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -328,53 +341,51 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
     print("Qestion Map : ${responseChec}");
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-        var id = responseChec[0]['id'];
-        var responseVariantId = responseChec[0]['questionId'];
-        Map<String, dynamic> requestBody = {
-          'oid': 0,
-          'questionnaireId': widget.qestion['questionnaireId'],
-          'responses': [
-            {
-              'id': 0,
-              'questionId': responseVariantId.toInt(),
-              'responseVariantId': id.toInt(),
-              // Уточните, какой ID нужно использовать
-              'alternativeResponse': '',
-              // Объединяем выбранные варианты в строку
-              'comentary': '',
-              // Пустая строка, замените на комментарий, если необходимо
-              'gradingType': widget.qestion['gradingType'].toInt(),
-              // Уточните, какой тип оценки нужно использовать
-              'dateResponse': DateTime.now().toIso8601String(),
-              // Текущая дата и время
-            }
-          ],
-          'licenseId': license
-        };
-        // Отправляем POST-запрос на сервер
-        final String basicAuth =
-            'Basic ' + base64Encode(utf8.encode('$username:$password'));
-        Uri url = Uri.parse(postResponse); // Замените на ваш URL
-        try {
-          final response =
-              await http.post(url, body: jsonEncode(requestBody), headers: {
-            'Authorization': basicAuth,
-            "Accept": "application/json",
-            "content-type": "application/json"
-          });
-          if (response.statusCode == 200) {
-            // Обработка успешного ответа от сервера
-            print('Response sent successfully.');
-          } else {
-            // Обработка ошибки
-            print(
-                'Failed to send response. Status code: ${response.statusCode}');
+      var id = responseChec[0]['id'];
+      var responseVariantId = responseChec[0]['questionId'];
+      Map<String, dynamic> requestBody = {
+        'oid': 0,
+        'questionnaireId': widget.qestion['questionnaireId'],
+        'responses': [
+          {
+            'id': 0,
+            'questionId': responseVariantId.toInt(),
+            'responseVariantId': id.toInt(),
+            // Уточните, какой ID нужно использовать
+            'alternativeResponse': '',
+            // Объединяем выбранные варианты в строку
+            'comentary': '',
+            // Пустая строка, замените на комментарий, если необходимо
+            'gradingType': widget.qestion['gradingType'].toInt(),
+            // Уточните, какой тип оценки нужно использовать
+            'dateResponse': DateTime.now().toIso8601String(),
+            // Текущая дата и время
           }
-        } catch (e) {
-          // Обработка ошибок сети
-          print('Error sending response: $e');
+        ],
+        'licenseId': license
+      };
+      // Отправляем POST-запрос на сервер
+      final String basicAuth =
+          'Basic ' + base64Encode(utf8.encode('$username:$password'));
+      Uri url = Uri.parse(postResponse); // Замените на ваш URL
+      try {
+        final response =
+            await http.post(url, body: jsonEncode(requestBody), headers: {
+          'Authorization': basicAuth,
+          "Accept": "application/json",
+          "content-type": "application/json"
+        });
+        if (response.statusCode == 200) {
+          // Обработка успешного ответа от сервера
+          print('Response sent successfully.');
+        } else {
+          // Обработка ошибки
+          print('Failed to send response. Status code: ${response.statusCode}');
         }
-
+      } catch (e) {
+        // Обработка ошибок сети
+        print('Error sending response: $e');
+      }
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -388,63 +399,61 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
-          builder: (context) =>
-              AlertDialog(
-                alignment: Alignment.center,
-                title: Text(
-                  returnDialogTitleFinish(widget.language),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontFamily: 'RobotoBlack',
-                    fontWeight: FontWeight.w700,
+          builder: (context) => AlertDialog(
+            alignment: Alignment.center,
+            title: Text(
+              returnDialogTitleFinish(widget.language),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontFamily: 'RobotoBlack',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              returnDialogMessageFinish(widget.language),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontFamily: 'RobotoRegular',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ButtonStyle(
+                  alignment: Alignment.center,
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  fixedSize: MaterialStateProperty.all(const Size(624, 57)),
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed)) {
+                        return Colors.green;
+                      }
+                      return questionsGroupColor;
+                    },
                   ),
                 ),
-                content: Text(
-                  returnDialogMessageFinish(widget.language),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
+                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (context) => const Questionnaires()),
+                    (route) => false),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(
+                    color: Colors.white,
                     fontSize: 24,
                     fontFamily: 'RobotoRegular',
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                actions: [
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      alignment: Alignment.center,
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      fixedSize: MaterialStateProperty.all(const Size(624, 57)),
-                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.pressed)) {
-                            return Colors.green;
-                          }
-                          return questionsGroupColor;
-                        },
-                      ),
-                    ),
-                    onPressed: () =>
-                        Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                                builder: (context) => const Questionnaires()),
-                                (route) => false),
-                    child: const Text(
-                      'Ok',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontFamily: 'RobotoRegular',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ],
               ),
+            ],
+          ),
         );
       }
     }

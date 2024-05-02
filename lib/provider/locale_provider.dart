@@ -1,7 +1,7 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:questionnaires/l10n/supported_localization.dart';
+
 
 class LocaleProvider with ChangeNotifier{
  //  Locale _locale = Locale('ro');

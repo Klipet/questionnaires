@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:questionnaires/screens/error_screen.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
@@ -10,7 +9,6 @@ import 'package:http/http.dart' as http;
 import '../factory/questions.dart';
 import '../util/colors.dart';
 import '../util/const_url.dart';
-import '../util/images.dart';
 import 'response_screen/build_multiple_ansver_vriant.dart';
 import 'response_screen/build_point_five_score.dart';
 import 'response_screen/build_single_answer_varinat.dart';

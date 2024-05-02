@@ -5,6 +5,7 @@ import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import '../../util/colors.dart';
 import '../questionnaires.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class MulteAnsverVatinat extends StatefulWidget {
   // const MulteAnsverVatinat({super.key});
@@ -53,8 +54,11 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AutoSizeText(
             title,
+            wrapWords: true,
+            minFontSize: 30,
+            maxLines: 2,
             style: const TextStyle(
               fontSize: 48,
               fontFamily: 'RobotoBlack',
@@ -62,7 +66,9 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('($coment)',
+          AutoSizeText('($coment)',
+              minFontSize: 22,
+              maxLines: 2,
               style: const TextStyle(
                 fontSize: 32,
                 fontFamily: 'RobotoRegular',
@@ -70,49 +76,62 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
               )),
           const SizedBox(height: 50),
           Expanded(
-              child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisExtent: 125,
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisExtent: 125,
+              ),
+              itemCount: countColunm(),
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isCheckedList[index] = !isCheckedList[index];
+                      responseChec.add(widget.qestion['responseVariants'][index]);
+                      print("Question Map: ${responseChec[0]}");
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              isCheckedList[index] = !isCheckedList[index];
+                              responseChec.add(widget.qestion['responseVariants'][index]);
+                              print("Question Map: ${responseChec[0]}");
+                            });
+                          },
+                          icon: Icon(
+                            isCheckedList[index]
+                                ? Icons.check_box
+                                : Icons.check_box_outline_blank,
+                            color: Colors.green,
+                            size: 54,
+                          ),
+                        ),
+                        SizedBox(width: 8.0),
+                        Flexible(
+                          child: AutoSizeText(
+                            returnResponse(widget.language)[index],
+                            minFontSize: 20,
+                            maxLines: 2,
+                            maxFontSize: 32,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'RobotoRegular',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-            itemCount: countColunm(),
-            itemBuilder: (context, index) {
-              return Container(
-                padding: EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          isCheckedList[index] = !isCheckedList[
-                              index]; // Изменяем состояние isChecked при нажатии на кнопку
-                          responseChec
-                              .add(widget.qestion['responseVariants'][index]);
-                          print("Qestion Map : ${responseChec[0]}");
-                        });
-                      },
-                      icon: Icon(
-                          isCheckedList[index]
-                              ? Icons.check_box
-                              : Icons.check_box_outline_blank,
-                          color: Colors.green,
-                          size: 54),
-                    ),
-                    SizedBox(width: 8.0),
-                    // Пространство между иконкой и текстом
-                    Text(
-                      returnResponse(widget.language)[index],
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontFamily: 'RobotoRegular',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          )),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

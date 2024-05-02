@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
-
 import '../util/colors.dart';
 import '../util/images.dart';
 
@@ -68,11 +67,11 @@ class _ErrorScreenState extends State<ErrorScreen> {
             )
           ],
         ),
-        body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        body: Column(mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           Center(
             child: Column(
               children: [
-                const SizedBox(height: 90),
                 Image.asset(
                   emptyImage,
                   // Путь к вашей картинке

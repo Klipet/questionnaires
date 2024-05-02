@@ -52,55 +52,6 @@ class _License extends State<License> {
 
   }
 
-  void getLicenseStatus(BuildContext context, String code) async {
-    try {
-
-      const String username = 'uSr_nps';
-      const String password = "V8-}W31S!l'D";
-      final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      var getResponse = await http.get( Uri.parse(
-          urlActivate + code),
-      headers: <String, String>{ 'authorization': basicAuth});
-      if (getResponse.statusCode == 200) {
-        final Map<String, dynamic> responseDate = json.decode(getResponse.body);
-        int errorCode = responseDate['errorCode'] as int;
-        if (errorCode == 0) {
-          String licenseID = responseDate['id'] as String;
-          putLicenseID(licenseID);
-          await Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const Questionnaires()),
-              (route) => false);
-
-        } else {
-          errorTheme = PinTheme(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.redAccent),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          );
-        }
-      } else {
-        setState(() {
-          forceError = true;
-          errorTheme = PinTheme(
-            width: 56,
-            height: 56,
-            textStyle: const TextStyle(
-                fontSize: 20,
-                color: textColor,
-                fontWeight: FontWeight.w600),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.red),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          );
-        });
-      }
-    } catch (e) {
-      print('Error in getLicenseStatus: $e');
-    }
-  }
 
   @override
   void initState() {
@@ -157,4 +108,62 @@ class _License extends State<License> {
       ),
     );
   }
+  void getLicenseStatus(BuildContext context, String code) async {
+    try {
+      const String username = 'uSr_nps';
+      const String password = "V8-}W31S!l'D";
+      final String basicAuth =
+          'Basic ' + base64Encode(utf8.encode('$username:$password'));
+      var getResponse = await http.get( Uri.parse(
+          urlActivate + code),
+          headers: <String, String>{ 'authorization': basicAuth});
+      if (getResponse.statusCode == 200) {
+        final Map<String, dynamic> responseDate = json.decode(getResponse.body);
+        int errorCode = responseDate['errorCode'] as int;
+        if (errorCode == 0) {
+          String licenseID = responseDate['id'] as String;
+          String nameLicense = responseDate['name'] as String;
+          putLicenseID(licenseID);
+          await Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const Questionnaires()),
+                  (route) => false);
+        } else {
+          setState(() {
+            forceError = true;
+            errorTheme = PinTheme(
+              width: 56,
+              height: 56,
+              textStyle: const TextStyle(
+                  fontSize: 20,
+                  color: textColor,
+                  fontWeight: FontWeight.w600),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          });
+        }
+      } else {
+        setState(() {
+          forceError = true;
+          errorTheme = PinTheme(
+            width: 56,
+            height: 56,
+            textStyle: const TextStyle(
+                fontSize: 20,
+                color: textColor,
+                fontWeight: FontWeight.w600),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.red),
+              borderRadius: BorderRadius.circular(3),
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      print('Error in getLicenseStatus: $e');
+    }
+  }
+
 }

@@ -9,7 +9,6 @@ import 'package:questionnaires/screens/license.dart';
 import 'package:questionnaires/util/colors.dart';
 import 'package:questionnaires/util/images.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../model/language_model.dart';
 import '../util/const_url.dart';
 import 'question_screen.dart';
@@ -66,7 +65,7 @@ class _Questionnaires extends State<Questionnaires> {
               items: const [
                 DropdownMenuItem(
                   value: 'RO',
-                  child: Text('Romanian'),
+                  child: Text('Română'),
                 ),
                 DropdownMenuItem(
                   value: 'RU',
@@ -108,8 +107,7 @@ class _Questionnaires extends State<Questionnaires> {
                       ),
                       const SizedBox(height: 80),
                       Text(
-                        AppLocalizations.of(context)!
-                            .textErrorQuestions,
+                        errorMessageText(currentLanguageCode),
                         maxLines: 2,
                         style: const TextStyle(
                             color: textColor,
@@ -211,16 +209,15 @@ class _Questionnaires extends State<Questionnaires> {
 
     Future<void> fetchQuestionnaires() async {
       var shered = await SecureSharedPref.getInstance();
-      var license = await shered.getString("licenseID");
+      String license = await shered.getString("licenseID") ?? '';
       const String username = 'uSr_nps';
       const String password = "V8-}W31S!l'D";
       final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      final response = await http.get(Uri.parse(urlQestionaries + license!),
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+      final response = await http.get(Uri.parse(urlQestionaries + license),
           headers: <String, String>{'authorization': basicAuth});
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseDate = json.decode(response.body);
-        setState(() {});
         if (responseDate['questionnaires'] != null) {
           questionnaires = parseQuestionnaires(responseDate);
           hasError = false;
@@ -290,9 +287,9 @@ class _Questionnaires extends State<Questionnaires> {
       }
     }
     String returnDropdownButton(String localeCod) {
-      String enName = 'Language';
-      String roName = 'Limba';
-      String ruName = 'Язык';
+      String enName = 'English';
+      String roName = 'Română';
+      String ruName = 'Русский';
       if (localeCod == 'RO') {
         return roName;
       } else if (localeCod == 'RU') {
@@ -301,6 +298,21 @@ class _Questionnaires extends State<Questionnaires> {
         return enName;
       }
     }
+  String errorMessageText(String localeCod) {
+    String enName =
+        'The questionnaire is not ready yet, but we are actively working on it. It will be available for filling out soon. Thank you for your understanding!';
+    String roName =
+        'Questionarul nu este încă pregătit, dar lucrăm activ la el. În curând va fi disponibil pentru completare. Mulțumim pentru înțelegere!';
+    String ruName =
+        'Опросник еще не готов, но мы активно работаем над ним. Скоро будет доступен для заполнения. Спасибо за понимание!';
+    if (localeCod == 'RO') {
+      return roName;
+    } else if (localeCod == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
 
 }
 

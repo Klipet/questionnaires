@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'package:questionnaires/screens/questionnaires.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import '../anmation/amination_image.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'license.dart';
 
@@ -37,35 +39,45 @@ class _Splash extends State<Splash> {
   Future<void> getLicenseStatus(BuildContext context) async {
     try {
       var shered = await SecureSharedPref.getInstance();
-      var license = await shered.getString("licenseID");
+      String license = await shered.getString("licenseID") ?? 'Non' ;
       const String username = 'uSr_nps';
       const String password = "V8-}W31S!l'D";
       final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
       var getResponse = await http.get(
           Uri.parse(
-              urlQestionaries + license!),
+              urlQestionaries + license),
           headers: <String, String>{'authorization': basicAuth});
       if (getResponse.statusCode == 200) {
         final Map<String, dynamic> responseDate = json.decode(getResponse.body);
         int errorCode = responseDate['errorCode'] as int;
         if (errorCode == 0 || errorCode == 165) {
-          await Navigator.of(context).pushAndRemoveUntil(
+           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const Questionnaires()),
               (route) => false);
-        }  else {
-          await Navigator.of(context).pushAndRemoveUntil(
+        }  else if(errorCode == 400) {
+          Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const License()),
               (route) => false);
         }
       } else {
-        await Navigator.of(context).pushAndRemoveUntil(
+        Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const License()),
             (route) => false);
       }
-    } catch (e) {
-      print('Error in getLicenseStatus: $e');
-    }
+   } catch (e) {
+      Navigator.of(context).pushAndRemoveUntil(
+         MaterialPageRoute(builder: (context) => const License()),
+             (route) => false);
+     Fluttertoast.showToast(
+         msg: 'Error $e',
+         backgroundColor: Colors.white,
+         toastLength: Toast.LENGTH_LONG,
+         gravity: ToastGravity.BOTTOM,
+         textColor: Colors.black, // цвет текста
+         fontSize: 15.0
+     );
+   }
   }
 
   final List<String> images = [

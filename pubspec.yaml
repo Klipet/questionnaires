@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  auto_size_text: ^3.0.0
+  permission_handler: ^10.3.0
+  fluttertoast: ^8.0.7
   flutter_native_splash: ^2.4.0
   http: ^1.2.1
   secure_shared_preferences: ^0.0.4

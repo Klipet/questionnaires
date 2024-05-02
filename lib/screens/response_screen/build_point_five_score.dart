@@ -1,13 +1,15 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class PointFiveScore extends StatefulWidget {
- // const PointFiveScore({super.key});
+  // const PointFiveScore({super.key});
   final String language;
   final int id;
   final int totalQuestionsCount;
@@ -16,7 +18,15 @@ class PointFiveScore extends StatefulWidget {
   final VoidCallback onPressed;
   final PageController onPressedController;
 
-  const PointFiveScore({super.key, required this.language, required this.qestion, required this.index, required this.onPressed, required this.id, required this.onPressedController, required this.totalQuestionsCount});
+  const PointFiveScore(
+      {super.key,
+      required this.language,
+      required this.qestion,
+      required this.index,
+      required this.onPressed,
+      required this.id,
+      required this.onPressedController,
+      required this.totalQuestionsCount});
 
   @override
   State<PointFiveScore> createState() => _PointFiveScoreState();
@@ -35,8 +45,21 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     super.initState();
   }
 
+  final smileAngryImage = 'assets/images/smile_hangry.png';
+  final smileBedImage = 'assets/images/smile_bad.png';
+  final smileOffImage = 'assets/images/smile_of.png';
+  final smileSimpleImage = 'assets/images/smile_simpl.png';
+  final smileLoveImage = 'assets/images/smile_love.png';
+
   @override
   Widget build(BuildContext context) {
+    final List<String> images = [
+      'assets/images/smile_hangry.png',
+      'assets/images/smile_bad.png',
+      'assets/images/smile_of.png',
+      'assets/images/smile_simpl.png',
+      'assets/images/smile_love.png',
+    ];
     String coment = returnQestinComment(widget.language);
     String title = returnQestinName(widget.language);
     String buttonText = returnButtonNext(widget.language);
@@ -48,15 +71,19 @@ class _PointFiveScoreState extends State<PointFiveScore> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AutoSizeText(
                   title,
+                  minFontSize: 38,
+                  maxLines: 2,
                   style: const TextStyle(
                     fontSize: 48,
                     fontFamily: 'RobotoBlack',
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text('($coment)',
+                AutoSizeText(coment,
+                    minFontSize: 22,
+                    maxLines: 2,
                     style: const TextStyle(
                       fontSize: 32,
                       fontFamily: 'RobotoRegular',
@@ -64,32 +91,55 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                     )),
               ],
             )),
-        const SizedBox(height: 110),
+        //const SizedBox(height: 110),
         Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  5,
-                      (index) {
-                    if (index == 4) {
-                      return _button(index); // Последняя кнопка без SizedBox
-                    } else {
-                      return Row(
-                        children: [
-                          _button(index),
-                          SizedBox(width: 20),
-                        ],
-                      );
-                    }
-                  },
-                ),
+                children: List.generate(images.length, (index) {
+                  int value = index + 1; // Определяем значение для каждой цифры (можете использовать что угодно)
+                  return Padding(
+                    padding: EdgeInsets.only(left: 57),
+                    child: GestureDetector(
+                      onTap: () {
+                        selectedIndex = value;
+                      },
+                      child: Image.asset(images[index], fit: BoxFit.contain),
+                    ),
+                  );
+                }),
               ),
             ],
           ),
         ),
+
+
+        //  child: Column(
+        //    mainAxisAlignment: MainAxisAlignment.start,
+        //    children: [
+        //      Row(
+        //        mainAxisAlignment: MainAxisAlignment.center,
+        //        children: List.generate(
+        //          images.length,
+        //              (index) {
+        //            if (index == 4) {
+        //              return _button(index); // Последняя кнопка без SizedBox
+        //            } else {
+        //              return Row(
+        //                children: [
+        //                  _button(index),
+        //                  SizedBox(width: 20),
+        //                ],
+        //              );
+        //            }
+        //          },
+        //        ),
+        //      ),
+        //    ],
+        //  ),
+
         Padding(
             padding: const EdgeInsets.only(bottom: 64),
             child: Row(
@@ -112,7 +162,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                       ),
                       fixedSize: MaterialStateProperty.all(const Size(275, 56)),
                       backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
+                        (Set<MaterialState> states) {
                           // Здесь можно указать разные цвета для различных состояний кнопки
                           if (states.contains(MaterialState.pressed)) {
                             // Цвет, когда кнопка нажата
@@ -139,62 +189,59 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     );
   }
 
-  Widget _button(int i) {
-    Color buttonColor;
-    if (i < 2) {
-      buttonColor = buttonRed;
-    } else if (i < 4) {
-      buttonColor = buttonElov;
-    } else {
-      buttonColor = buttonGreen;
-    }
-    bool isPressed = i == selectedIndex; // Получаем состояние нажатия кнопки
-    return ElevatedButton(
-      onPressed: () {
-        // Действие при нажатии на кнопку
-        setState(() {
-          selectedIndex = i;
-        });
-
-      },
-
-      style: isPressed?
-      OutlinedButton.styleFrom(
-        shape: const CircleBorder(),
-        side: BorderSide(
-          color: buttonColor, // Устанавливаем цвет рамки при нажатии
-          width: 4.0, // Устанавливаем ширину рамки
-        ),
-        fixedSize: const Size.square(95),
-      )
-          :ElevatedButton.styleFrom(
-        shape: const CircleBorder(),
-        fixedSize: const Size.square(95),
-        backgroundColor: buttonColor,
-        padding: const EdgeInsets.all(20),
-      ),
-      child: isPressed ?
-      Text(
-        (i + 1).toString(),
-        style:  TextStyle(
-          color: buttonColor,
-          fontFamily: 'RobotoRegular',
-          fontSize: 36,
-          fontWeight:FontWeight.w900,
-        ),
-      )
-          :Text(
-        (i + 1).toString(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontFamily: 'RobotoRegular',
-          fontSize: 36,
-          fontWeight:FontWeight.w900,
-        ),
-      ),
-
-    );
-  }
+  // Widget _button(int i) {
+  //     Color buttonColor;
+  //     if (i < 2) {
+  //       buttonColor = buttonRed;
+  //     } else if (i < 4) {
+  //       buttonColor = buttonElov;
+  //     } else {
+  //       buttonColor = buttonGreen;
+  //     }
+  //     bool isPressed = i == selectedIndex; // Получаем состояние нажатия кнопки
+  //   return Buton(
+  //     onPressed: () {
+  //       // Действие при нажатии на кнопку
+  //       setState(() {
+  //         selectedIndex = i;
+  //       });
+  //     },
+  //     style: isPressed
+  //         ? OutlinedButton.styleFrom(
+  //             shape: const CircleBorder(),
+  //             side: BorderSide(
+  //               color: buttonColor, // Устанавливаем цвет рамки при нажатии
+  //               width: 4.0, // Устанавливаем ширину рамки
+  //             ),
+  //             fixedSize: const Size.square(95),
+  //           )
+  //         : ElevatedButton.styleFrom(
+  //             shape: const CircleBorder(),
+  //             fixedSize: const Size.square(95),
+  //             backgroundColor: buttonColor,
+  //             padding: const EdgeInsets.all(20),
+  //           ),
+  //     child: isPressed
+  //         ? Text(
+  //             (i + 1).toString(),
+  //             style: TextStyle(
+  //               color: buttonColor,
+  //               fontFamily: 'RobotoRegular',
+  //               fontSize: 36,
+  //               fontWeight: FontWeight.w900,
+  //             ),
+  //           )
+  //         : Text(
+  //             (i + 1).toString(),
+  //             style: const TextStyle(
+  //               color: Colors.white,
+  //               fontFamily: 'RobotoRegular',
+  //               fontSize: 36,
+  //               fontWeight: FontWeight.w900,
+  //             ),
+  //           ),
+  //   );
+  // }
 
   String returnButtonNext(String localeCod) {
     String enName = 'Next';
@@ -235,7 +282,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
 
   void _onNextPressed() {
     // Проверяем, есть ли хотя бы один выбранный вариант ответа
-    if (selectedIndex != null ) {
+    if (selectedIndex != null) {
       // Если есть, выполняем отправку POST-запроса на сервер
       _sendResponseToServer();
     } else {
@@ -272,7 +319,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                 ),
                 fixedSize: MaterialStateProperty.all(const Size(624, 57)),
                 backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                      (Set<MaterialState> states) {
+                  (Set<MaterialState> states) {
                     // Здесь можно указать разные цвета для различных состояний кнопки
                     if (states.contains(MaterialState.pressed)) {
                       // Цвет, когда кнопка нажата
@@ -313,7 +360,6 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     }
   }
 
-
   String returnDialogTitle(String localeCod) {
     String enName = 'Atention';
     String roName = 'Alertă';
@@ -326,6 +372,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
       return enName;
     }
   }
+
   String returnDialogTitleFinish(String localeCod) {
     String enName = 'Thank you';
     String roName = 'Mulțumesc';
@@ -338,6 +385,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
       return enName;
     }
   }
+
   String returnDialogMessageFinish(String localeCod) {
     String enName = 'Survey completed';
     String roName = 'Chestionarul este încheiat';
@@ -354,9 +402,10 @@ class _PointFiveScoreState extends State<PointFiveScore> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
-
+    print(selectedIndex);
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
+      String response = (selectedIndex).toString();
       Map<String, dynamic> requestBody = {
         'oid': 0,
         'questionnaireId': widget.qestion['questionnaireId'],
@@ -364,9 +413,9 @@ class _PointFiveScoreState extends State<PointFiveScore> {
           {
             'id': 0,
             'questionId': widget.qestion['id'],
-            'responseVariantId': selectedIndex! + 1 ,
+            'responseVariantId': 0,
             // Уточните, какой ID нужно использовать
-            'alternativeResponse': '',
+            'alternativeResponse': response,
             // Объединяем выбранные варианты в строку
             'comentary': '',
             // Пустая строка, замените на комментарий, если необходимо
@@ -384,7 +433,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
       Uri url = Uri.parse(postResponse); // Замените на ваш URL
       try {
         final response =
-        await http.post(url, body: jsonEncode(requestBody), headers: {
+            await http.post(url, body: jsonEncode(requestBody), headers: {
           'Authorization': basicAuth,
           "Accept": "application/json",
           "content-type": "application/json"
@@ -410,7 +459,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
           duration: const Duration(microseconds: 200),
           curve: Curves.easeInOut,
         );
-      }else {
+      } else {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
@@ -445,7 +494,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                   ),
                   fixedSize: MaterialStateProperty.all(const Size(624, 57)),
                   backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                        (Set<MaterialState> states) {
+                    (Set<MaterialState> states) {
                       if (states.contains(MaterialState.pressed)) {
                         return Colors.green;
                       }
@@ -454,8 +503,9 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                   ),
                 ),
                 onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const Questionnaires()),
-                (route) => false),
+                    MaterialPageRoute(
+                        builder: (context) => const Questionnaires()),
+                    (route) => false),
                 child: const Text(
                   'Ok',
                   style: TextStyle(

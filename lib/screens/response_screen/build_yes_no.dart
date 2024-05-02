@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
-
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
@@ -65,7 +64,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text('($coment)',
+                Text(coment,
                     style: const TextStyle(
                       fontSize: 32,
                       fontFamily: 'RobotoRegular',

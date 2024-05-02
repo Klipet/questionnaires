@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -58,15 +58,19 @@ class _PointThenScoreState extends State<PointThenScore> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AutoSizeText(
                   title,
+                  minFontSize: 38,
+                  maxLines: 2,
                   style: const TextStyle(
                     fontSize: 48,
                     fontFamily: 'RobotoBlack',
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text('($coment)',
+                AutoSizeText(coment,
+                    minFontSize: 22,
+                    maxLines: 2,
                     style: const TextStyle(
                       fontSize: 32,
                       fontFamily: 'RobotoRegular',
@@ -339,6 +343,7 @@ class _PointThenScoreState extends State<PointThenScore> {
 
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
+      String response = (selectedIndex! + 1).toString();
       Map<String, dynamic> requestBody = {
         'oid': 0,
         'questionnaireId': widget.qestion['questionnaireId'],
@@ -346,9 +351,9 @@ class _PointThenScoreState extends State<PointThenScore> {
           {
             'id': 0,
             'questionId': widget.qestion['id'],
-            'responseVariantId': selectedIndex! + 1,
+            'responseVariantId': 0,
             // Уточните, какой ID нужно использовать
-            'alternativeResponse': '',
+            'alternativeResponse': response,
             // Объединяем выбранные варианты в строку
             'comentary': '',
             // Пустая строка, замените на комментарий, если необходимо
