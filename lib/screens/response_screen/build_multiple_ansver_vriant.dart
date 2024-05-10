@@ -14,6 +14,7 @@ class MulteAnsverVatinat extends StatefulWidget {
   final int totalQuestionsCount;
   final Map<String, dynamic> qestion;
   final int index;
+
   final VoidCallback onPressed;
   final PageController onPressedController;
 
@@ -46,9 +47,8 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
     String coment = returnQestinComment(widget.language);
     String title = returnQestinName(widget.language);
     String buttonText = returnButtonNext(widget.language);
-
-    return Center(
-        child: Padding(
+    return Scaffold(
+        body: Padding(
       padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -76,7 +76,14 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
               )),
           const SizedBox(height: 50),
           Expanded(
-            child: GridView.builder(
+            child: Scrollbar(
+              thickness: 5,
+              radius: Radius.circular(2),
+              interactive: true,
+              trackVisibility: true,
+              thumbVisibility: true,
+            child:
+            GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisExtent: 125,
@@ -92,7 +99,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                     });
                   },
                   child: Container(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Row(
                       children: [
                         IconButton(
@@ -131,12 +138,12 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                 );
               },
             ),
-          ),
+            )),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Padding(
-                padding: EdgeInsets.only(top: 20, bottom: 64),
+                padding: const EdgeInsets.only(top: 20, bottom: 64),
                 child: ElevatedButton(
                   onPressed: () {
                     _onNextPressed();
@@ -174,8 +181,8 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                 ),
               )
             ],
-          )
-        ],
+          ),
+          ],
       ),
     ));
   }
@@ -400,6 +407,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
+          barrierDismissible: false,
           builder: (context) => AlertDialog(
             alignment: Alignment.center,
             title: Text(

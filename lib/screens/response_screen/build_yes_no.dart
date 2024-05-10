@@ -371,6 +371,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
+          barrierDismissible: false,
           builder: (context) => AlertDialog(
             alignment: Alignment.center,
             title: Text(

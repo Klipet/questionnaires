@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -18,66 +17,81 @@ class Splash extends StatefulWidget {
   State<StatefulWidget> createState() => _Splash();
 }
 
-class _Splash extends State<Splash> {
+class _Splash extends State<Splash> with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-    Future.delayed(const Duration(seconds: 5),(){
-      getLicenseStatus(context);
+    _controller = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    _controller.forward();
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        getLicenseStatus(context);
+      }
     });
     initialization();
   }
 
-  void initialization() async{
+  void initialization() async {
     build(context);
     FlutterNativeSplash.remove();
-}
+  }
 
   Future<void> getLicenseStatus(BuildContext context) async {
     try {
       var shered = await SecureSharedPref.getInstance();
-      String license = await shered.getString("licenseID") ?? 'Non' ;
-      const String username = 'uSr_nps';
-      const String password = "V8-}W31S!l'D";
+      String license = await shered.getString("licenseID") ?? 'Non';
       final String basicAuth =
           'Basic ${base64Encode(utf8.encode('$username:$password'))}';
       var getResponse = await http.get(
-          Uri.parse(
-              urlQestionaries + license),
+          Uri.parse(urlQestionaries + license),
           headers: <String, String>{'authorization': basicAuth});
       if (getResponse.statusCode == 200) {
-        final Map<String, dynamic> responseDate = json.decode(getResponse.body);
+        final Map<String, dynamic> responseDate =
+        json.decode(getResponse.body);
         int errorCode = responseDate['errorCode'] as int;
         if (errorCode == 0 || errorCode == 165) {
-           Navigator.of(context).pushAndRemoveUntil(
+          Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const Questionnaires()),
-              (route) => false);
-        }  else if(errorCode == 400) {
+                  (route) => false);
+        } else if (errorCode == 400) {
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const License()),
-              (route) => false);
+                  (route) => false);
+        } else if (errorCode == 124) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const License()),
+                  (route) => false);
         }
       } else {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const License()),
-            (route) => false);
+                (route) => false);
       }
-   } catch (e) {
+    } catch (e) {
       Navigator.of(context).pushAndRemoveUntil(
-         MaterialPageRoute(builder: (context) => const License()),
-             (route) => false);
-     Fluttertoast.showToast(
-         msg: 'Error $e',
-         backgroundColor: Colors.white,
-         toastLength: Toast.LENGTH_LONG,
-         gravity: ToastGravity.BOTTOM,
-         textColor: Colors.black, // цвет текста
-         fontSize: 15.0
-     );
-   }
+          MaterialPageRoute(builder: (context) => const License()),
+              (route) => false);
+      Fluttertoast.showToast(
+          msg: 'Error: $e',
+          backgroundColor: Colors.white,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          textColor: Colors.black, // цвет текста
+          fontSize: 15.0);
+    }
   }
 
   final List<String> images = [
@@ -92,19 +106,28 @@ class _Splash extends State<Splash> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-          child: Padding(
-        padding: const EdgeInsets.only(left: 94, right: 94),
-        child: Row(
+        child: Padding(
+          padding: const EdgeInsets.only(left: 94, right: 94),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: images.map((image) {
-              return DelayedAnimation(
+              return FadeTransition(
+                opacity: _animation,
+                child: DelayedAnimation(
                   delay: Duration(seconds: images.indexOf(image)),
-                  child: AnimatedImage(image: image));
-              //  return Expanded(
-              //    child:  Image.asset(image),
-              //  );
-            }).toList()),
-      )),
+                  child: AnimatedImage(image: image),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

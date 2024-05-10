@@ -400,6 +400,7 @@ class _PointThenScoreState extends State<PointThenScore> {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
+          barrierDismissible: false,
           builder: (context) => AlertDialog(
             alignment: Alignment.center,
             title: Text(

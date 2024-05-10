@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import '../factory/questions.dart';
 import '../util/colors.dart';
 import '../util/const_url.dart';
+import 'license.dart';
 import 'response_screen/build_multiple_ansver_vriant.dart';
 import 'response_screen/build_point_five_score.dart';
 import 'response_screen/build_single_answer_varinat.dart';
@@ -53,13 +54,13 @@ class _QuestionScreenState extends State<QuestionScreen> {
     widget.oid;
     widget.language;
     String count = questions.length.toString();
-    return Container(
-        child: isLoading
+    return Scaffold(
+        body: isLoading
             ? const Center(
                 child: CircularProgressIndicator(color: questionsGroupColor),
               )
             : Padding(
-                padding: EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.only(top: 0),
                 child: hasError
                     ? ErrorScreen(language: widget.language)
                     : PageView.builder(
@@ -101,9 +102,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                   ),
                                 ],
                                 title: Text(
-                                  (index + 1).toString() +
-                                      " / " +
-                                      count.toString(),
+                                  (index + 1).toString() + " / " + count.toString(),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(color: Colors.white),
                                 ),
@@ -188,6 +187,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         headers: <String, String>{'authorization': basicAuth});
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseDate = json.decode(response.body);
+      int errorcode = responseDate['errorCode'] as int;
       setState(() {});
       if (responseDate['questionnaire'] != null) {
         questionsList = responseDate['questionnaire']['questions'];
@@ -195,6 +195,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         List<dynamic> allQuestions = responseDate['questionnaire']['questions'];
         Map<String, dynamic> qestionFirst = allQuestions[0];
         Map<String, dynamic> questionMap = jsonDecode(qestionFirst['question']);
+
         String titleQestion = questionMap[widget.language];
         if (titleQestion == '') {
           setState(() {
@@ -208,6 +209,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
         setState(() {
           isLoading = false;
         });
+      }else if(errorcode == 124){
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const License()),
+                (route) => false);
       }
     }
   }

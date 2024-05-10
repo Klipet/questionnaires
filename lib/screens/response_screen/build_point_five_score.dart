@@ -34,9 +34,11 @@ class PointFiveScore extends StatefulWidget {
 
 class _PointFiveScoreState extends State<PointFiveScore> {
   bool isCheckedFirstButton = false;
-  int? selectedIndex;
+  int selectedIndex = -1;
+  bool selected = false;
   late List<bool> isCheckedList;
   late List<dynamic> responseChec;
+
 
   @override
   void initState() {
@@ -44,22 +46,24 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     responseChec = [];
     super.initState();
   }
-
-  final smileAngryImage = 'assets/images/smile_hangry.png';
-  final smileBedImage = 'assets/images/smile_bad.png';
-  final smileOffImage = 'assets/images/smile_of.png';
-  final smileSimpleImage = 'assets/images/smile_simpl.png';
-  final smileLoveImage = 'assets/images/smile_love.png';
+  final List<String> images = [
+   'assets/images/smile_hangry.png',
+   'assets/images/smile_bad.png',
+   'assets/images/smile_of.png',
+   'assets/images/smile_simpl.png',
+   'assets/images/smile_love.png',
+ ];
+ final List<String> selectedImages = [
+   'assets/images/selected_smile_hangry.png',
+   'assets/images/selected_smile_bad.png',
+   'assets/images/selected_smile_of.png',
+   'assets/images/selected_smile_simpl.png',
+   'assets/images/selected_smile_love.png',
+ ];
 
   @override
   Widget build(BuildContext context) {
-    final List<String> images = [
-      'assets/images/smile_hangry.png',
-      'assets/images/smile_bad.png',
-      'assets/images/smile_of.png',
-      'assets/images/smile_simpl.png',
-      'assets/images/smile_love.png',
-    ];
+
     String coment = returnQestinComment(widget.language);
     String title = returnQestinName(widget.language);
     String buttonText = returnButtonNext(widget.language);
@@ -101,45 +105,17 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                 children: List.generate(images.length, (index) {
                   int value = index + 1; // Определяем значение для каждой цифры (можете использовать что угодно)
                   return Padding(
-                    padding: EdgeInsets.only(left: 57),
-                    child: GestureDetector(
-                      onTap: () {
-                        selectedIndex = value;
-                      },
-                      child: Image.asset(images[index], fit: BoxFit.contain),
-                    ),
+                    padding: const EdgeInsets.only(right: 57),
+                      child: _buttonImages(index)
+                     // isCheckedList[index] ? Image.asset(selectedImages[index], fit: BoxFit.contain)
+                     //     : Image.asset(images[index], fit: BoxFit.contain),
+
                   );
                 }),
               ),
             ],
           ),
         ),
-
-
-        //  child: Column(
-        //    mainAxisAlignment: MainAxisAlignment.start,
-        //    children: [
-        //      Row(
-        //        mainAxisAlignment: MainAxisAlignment.center,
-        //        children: List.generate(
-        //          images.length,
-        //              (index) {
-        //            if (index == 4) {
-        //              return _button(index); // Последняя кнопка без SizedBox
-        //            } else {
-        //              return Row(
-        //                children: [
-        //                  _button(index),
-        //                  SizedBox(width: 20),
-        //                ],
-        //              );
-        //            }
-        //          },
-        //        ),
-        //      ),
-        //    ],
-        //  ),
-
         Padding(
             padding: const EdgeInsets.only(bottom: 64),
             child: Row(
@@ -189,59 +165,25 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     );
   }
 
-  // Widget _button(int i) {
-  //     Color buttonColor;
-  //     if (i < 2) {
-  //       buttonColor = buttonRed;
-  //     } else if (i < 4) {
-  //       buttonColor = buttonElov;
-  //     } else {
-  //       buttonColor = buttonGreen;
-  //     }
-  //     bool isPressed = i == selectedIndex; // Получаем состояние нажатия кнопки
-  //   return Buton(
-  //     onPressed: () {
-  //       // Действие при нажатии на кнопку
-  //       setState(() {
-  //         selectedIndex = i;
-  //       });
-  //     },
-  //     style: isPressed
-  //         ? OutlinedButton.styleFrom(
-  //             shape: const CircleBorder(),
-  //             side: BorderSide(
-  //               color: buttonColor, // Устанавливаем цвет рамки при нажатии
-  //               width: 4.0, // Устанавливаем ширину рамки
-  //             ),
-  //             fixedSize: const Size.square(95),
-  //           )
-  //         : ElevatedButton.styleFrom(
-  //             shape: const CircleBorder(),
-  //             fixedSize: const Size.square(95),
-  //             backgroundColor: buttonColor,
-  //             padding: const EdgeInsets.all(20),
-  //           ),
-  //     child: isPressed
-  //         ? Text(
-  //             (i + 1).toString(),
-  //             style: TextStyle(
-  //               color: buttonColor,
-  //               fontFamily: 'RobotoRegular',
-  //               fontSize: 36,
-  //               fontWeight: FontWeight.w900,
-  //             ),
-  //           )
-  //         : Text(
-  //             (i + 1).toString(),
-  //             style: const TextStyle(
-  //               color: Colors.white,
-  //               fontFamily: 'RobotoRegular',
-  //               fontSize: 36,
-  //               fontWeight: FontWeight.w900,
-  //             ),
-  //           ),
-  //   );
-  // }
+  Widget _buttonImages(int i) {
+     bool isPressed = i == selectedIndex; // Получаем состояние нажатия кнопки
+   return  GestureDetector(
+     onTapUp: (_) {
+       // Действие при нажатии на кнопку
+       setState(() {
+         selectedIndex = i;
+       });
+     },
+     child: Container(
+       width: 157, // Ширина изображения
+       height: 157, // Высота изображения
+       child: Image.asset(
+         i != selectedIndex ? images[i]:  selectedImages[i],
+         fit: BoxFit.fill,
+       ),
+     ),
+   );
+   }
 
   String returnButtonNext(String localeCod) {
     String enName = 'Next';
@@ -402,10 +344,10 @@ class _PointFiveScoreState extends State<PointFiveScore> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
-    print(selectedIndex);
+    print(selectedIndex! +1 );
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      String response = (selectedIndex).toString();
+      String response = (selectedIndex! + 1).toString();
       Map<String, dynamic> requestBody = {
         'oid': 0,
         'questionnaireId': widget.qestion['questionnaireId'],
@@ -463,6 +405,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
+          barrierDismissible: false,
           builder: (context) => AlertDialog(
             alignment: Alignment.center,
             title: Text(

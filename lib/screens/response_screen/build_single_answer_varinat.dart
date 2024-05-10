@@ -36,12 +36,14 @@ class SingleAnswerVariant extends StatefulWidget {
 class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
   late bool isCheckedList = false;
   late List<dynamic> responseChec;
+  late ScrollController _scrollController;
   int? selectedIndex;
 
   @override
   void initState() {
     // isCheckedList = List.generate(countColunm(), (index) => false);
     responseChec = [];
+    _scrollController = ScrollController();
     super.initState();
   }
 
@@ -79,7 +81,15 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
               )),
           const SizedBox(height: 50),
           Expanded(
-            child: GridView.builder(
+            child:
+            Scrollbar(
+              thickness: 5,
+              radius: Radius.circular(2),
+             controller: _scrollController,
+              interactive: true,
+              trackVisibility: true,
+              thumbVisibility: true,
+              child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisExtent: 90,
@@ -134,6 +144,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                 );
               },
             ),
+            )
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -399,6 +410,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
         // Если ни один вариант не выбран, выводим сообщение об ошибке
         showDialog(
           context: context,
+          barrierDismissible: false,
           builder: (context) => AlertDialog(
             alignment: Alignment.center,
             title: Text(
