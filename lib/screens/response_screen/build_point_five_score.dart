@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:questionnaires/provider/post_privider.dart';
+import 'package:questionnaires/factory/questions.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import '../../factory/response_post.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
@@ -40,6 +44,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
   late List<dynamic> responseChec;
 
 
+
   @override
   void initState() {
     isCheckedList = List.generate(5, (index) => false);
@@ -63,7 +68,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
 
   @override
   Widget build(BuildContext context) {
-
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context);
     String coment = returnQestinComment(widget.language);
     String title = returnQestinName(widget.language);
     String buttonText = returnButtonNext(widget.language);
@@ -344,53 +349,68 @@ class _PointFiveScoreState extends State<PointFiveScore> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     print(selectedIndex! +1 );
+    List<ResponsePost> responses = [];
+    String response = (selectedIndex! + 1).toString();
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      String response = (selectedIndex! + 1).toString();
-      Map<String, dynamic> requestBody = {
-        'oid': 0,
-        'questionnaireId': widget.qestion['questionnaireId'],
-        'responses': [
-          {
-            'id': 0,
-            'questionId': widget.qestion['id'],
-            'responseVariantId': 0,
-            // Уточните, какой ID нужно использовать
-            'alternativeResponse': response,
-            // Объединяем выбранные варианты в строку
-            'comentary': '',
-            // Пустая строка, замените на комментарий, если необходимо
-            'gradingType': widget.qestion['gradingType'].toInt(),
-            // Уточните, какой тип оценки нужно использовать
-            'dateResponse': DateTime.now().toIso8601String(),
-            // Текущая дата и время
-          }
-        ],
-        'licenseId': license
-      };
-      // Отправляем POST-запрос на сервер
-      final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      Uri url = Uri.parse(postResponse); // Замените на ваш URL
-      try {
-        final response =
-            await http.post(url, body: jsonEncode(requestBody), headers: {
-          'Authorization': basicAuth,
-          "Accept": "application/json",
-          "content-type": "application/json"
-        });
-        if (response.statusCode == 200) {
-          // Обработка успешного ответа от сервера
-          print('Response sent successfully.');
-        } else {
-          // Обработка ошибки
-          print('Failed to send response. Status code: ${response.statusCode}');
-        }
-      } catch (e) {
-        // Обработка ошибок сети
-        print('Error sending response: $e');
-      }
+      responsePostProvider.addResponse(ResponsePost(
+        id: 0,
+        questionId: widget.qestion['id'],
+        responseVariantId: 0,
+        alternativeResponse: response,
+        commentary: '',
+        gradingType: widget.qestion['gradingType'].toInt(),
+        dateResponse: DateTime.now().toIso8601String(),
+      )
+      );
+      print(responsePostProvider.responses.length);
+
+  //
+  //    Map<String, dynamic> requestBody = {
+  //      'oid': 0,
+  //      'questionnaireId': widget.qestion['questionnaireId'],
+  //      'responses': [
+  //        {
+  //          'id': 0,
+  //          'questionId': widget.qestion['id'],
+  //          'responseVariantId': 0,
+  //          // Уточните, какой ID нужно использовать
+  //          'alternativeResponse': response,
+  //          // Объединяем выбранные варианты в строку
+  //          'comentary': '',
+  //          // Пустая строка, замените на комментарий, если необходимо
+  //          'gradingType': widget.qestion['gradingType'].toInt(),
+  //          // Уточните, какой тип оценки нужно использовать
+  //          'dateResponse': DateTime.now().toIso8601String(),
+  //          // Текущая дата и время
+  //        }
+  //      ],
+  //      'licenseId': license
+  //    };
+  //    // Отправляем POST-запрос на сервер
+  //    final String basicAuth =
+  //        'Basic ' + base64Encode(utf8.encode('$username:$password'));
+  //    Uri url = Uri.parse(postResponse); // Замените на ваш URL
+  //    try {
+  //      final response =
+  //          await http.post(url, body: jsonEncode(requestBody), headers: {
+  //        'Authorization': basicAuth,
+  //        "Accept": "application/json",
+  //        "content-type": "application/json"
+  //      });
+  //      if (response.statusCode == 200) {
+  //        // Обработка успешного ответа от сервера
+  //        print('Response sent successfully.');
+  //      } else {
+  //        // Обработка ошибки
+  //        print('Failed to send response. Status code: ${response.statusCode}');
+  //      }
+  //    } catch (e) {
+  //      // Обработка ошибок сети
+  //      print('Error sending response: $e');
+  //    }
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -445,10 +465,44 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                     },
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const Questionnaires()),
-                    (route) => false),
+                onPressed: () async {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const Questionnaires()),
+                          (route) => false);
+                  List<ResponsePost> allResponses = responsePostProvider.responses;
+                  print("PostRespons: ${allResponses.toString()}");
+                  Map<String, dynamic> staticData = {
+                    "oid": 0,
+                    "questionnaireId": 0,
+                    "responses": allResponses,
+                    "licenseId": license,
+
+                  };
+                  final String basicAuth =
+                      'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+                  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+                  try {
+                    final response =
+                        await http.post(url, body: jsonEncode(staticData), headers: {
+                      'Authorization': basicAuth,
+                      "Accept": "application/json",
+                      "content-type": "application/json"
+                    });
+                    if (response.statusCode == 200) {
+                      // Обработка успешного ответа от сервера
+                      print('Response sent successfully.');
+                      responsePostProvider.clearResponses();
+                    } else {
+                      // Обработка ошибки
+                      print('Failed to send response. Status code: ${response.statusCode}');
+                    }
+                  } catch (e) {
+                    // Обработка ошибок сети
+                    print('Error sending response: $e');
+                  }
+
+                },
                 child: const Text(
                   'Ok',
                   style: TextStyle(

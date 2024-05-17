@@ -4,17 +4,6 @@ import 'package:flutter/material.dart';
 
 
 class LocaleProvider with ChangeNotifier{
- //  Locale _locale = Locale('ro');
- //  Locale get locale => _locale;
- //  void setLocale(Locale loc){
- //    if(!L10n.support.contains(loc)) return;
- //    _locale = loc;
- //    notifyListeners();
- //  }
- //  void clearLocale(){
- //    _locale = '' as Locale;
- //    notifyListeners();
- //  }
   String _currentLanguageCode = 'RO';
 
   String get currentLanguageCode => _currentLanguageCode;

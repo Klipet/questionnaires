@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:questionnaires/provider/post_privider.dart';
+import 'package:questionnaires/save_response/multe_ansver_vatinat.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
+import '../../factory/response_post.dart';
 import '../../util/colors.dart';
 import '../questionnaires.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -25,7 +29,7 @@ class MulteAnsverVatinat extends StatefulWidget {
       required this.index,
       required this.qestion,
       required this.onPressed,
-      required this.onPressedController, required this.totalQuestionsCount});
+      required this.onPressedController, required this.totalQuestionsCount,});
 
   @override
   State<MulteAnsverVatinat> createState() => _MulteAnsverVatinatState();
@@ -34,12 +38,61 @@ class MulteAnsverVatinat extends StatefulWidget {
 class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
   late List<bool> isCheckedList;
   late List<dynamic> responseChec;
+  final ScrollController _scrollController = ScrollController();
+  bool isItemVisible = true;
 
   @override
   void initState() {
     isCheckedList = List.generate(countColunm(), (index) => false);
     responseChec = [];
+    _scrollController.addListener(_scrollListener);
+    _loadSavedResponses();
     super.initState();
+  }
+  void _loadSavedResponses() {
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
+    if (savedResponses != null) {
+      setState(() {
+        for (int i = 0; i < savedResponses.length; i++) {
+          isCheckedList[savedResponses[i]] = true;
+        //  responseChec.add(widget.qestion['responseVariants'][savedResponses[i]]);
+        }
+      });
+    }
+  }
+
+  void _saveResponses() {
+    List<int> selectedIndices = [];
+    for (int i = 0; i < isCheckedList.length; i++) {
+      if (isCheckedList[i]) {
+        selectedIndices.add(i);
+      }
+    }
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
+  }
+
+  void _scrollListener() {
+    final double topEdge = _scrollController.offset;
+    final double bottomEdge =
+        _scrollController.offset + MediaQuery.of(context).size.height;
+
+    const double itemHeight = 100.0;
+    // Вычисляем индексы первого и последнего элементов, видимых на экране
+    final int firstVisibleIndex = (topEdge / itemHeight).floor();
+    final int lastVisibleIndex = (bottomEdge / itemHeight).ceil();
+
+    // Обновляем состояние, чтобы перерисовать виджет
+    setState(() {
+      // Теперь вы можете использовать firstVisibleIndex и lastVisibleIndex для скрытия элементов в вашем списке
+      // Например, можно хранить список видимых индексов в состоянии и использовать его для отображения элементов
+      if (topEdge > 0 || bottomEdge < lastVisibleIndex) {
+        isItemVisible = false;
+      } else {
+        isItemVisible = true;
+      }
+    });
   }
 
   @override
@@ -47,6 +100,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
     String coment = returnQestinComment(widget.language);
     String title = returnQestinName(widget.language);
     String buttonText = returnButtonNext(widget.language);
+    final multeAnsverVatinatResponseRemove = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
     return Scaffold(
         body: Padding(
       padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
@@ -76,14 +130,15 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
               )),
           const SizedBox(height: 50),
           Expanded(
-            child: Scrollbar(
-              thickness: 5,
-              radius: Radius.circular(2),
-              interactive: true,
-              trackVisibility: true,
-              thumbVisibility: true,
+          //  child: Scrollbar(
+          //    thickness: 5,
+          //    radius: Radius.circular(2),
+          //    interactive: true,
+          //    trackVisibility: true,
+          //    thumbVisibility: true,
             child:
             GridView.builder(
+            //  controller: _scrollController,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisExtent: 125,
@@ -94,8 +149,16 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                   onTap: () {
                     setState(() {
                       isCheckedList[index] = !isCheckedList[index];
-                      responseChec.add(widget.qestion['responseVariants'][index]);
-                      print("Question Map: ${responseChec[0]}");
+                     // bool response = !_multeAnsverVatinatResponse.getResponse(index) ?? false;
+                     // responseChec.add(widget.qestion['responseVariants'][index]);
+                      if (isCheckedList[index]) {
+                        responseChec.add(widget.qestion['responseVariants'][index]);
+                      } else {
+                        responseChec.remove(widget.qestion['responseVariants'][index]);
+                        multeAnsverVatinatResponseRemove.clearResponseVariant();
+                      }
+                      _saveResponses();
+
                     });
                   },
                   child: Container(
@@ -106,8 +169,14 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                           onPressed: () {
                             setState(() {
                               isCheckedList[index] = !isCheckedList[index];
-                              responseChec.add(widget.qestion['responseVariants'][index]);
-                              print("Question Map: ${responseChec[0]}");
+                              if (isCheckedList[index]) {
+                                responseChec.add(widget.qestion['responseVariants'][index]);
+                              } else {
+                                responseChec.remove(widget.qestion['responseVariants'][index]);
+                                multeAnsverVatinatResponseRemove.clearResponseVariant();
+                              }
+                              _saveResponses();
+
                             });
                           },
                           icon: Icon(
@@ -137,7 +206,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                   ),
                 );
               },
-            ),
+            //),
             )),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -342,58 +411,25 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
-    var ststusCodeError = 400;
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     print("Qestion Map : ${widget.qestion}");
-// Получаем выбранные варианты ответов на основе isCheckedList
     try {
       for (int i = 0; i < responseChec.length; i++) {
         var id = responseChec[i]['id'];
         var responseVariantId = responseChec[i]['questionId'];
-        Map<String, dynamic> requestBody = {
-          'oid': 0,
-          'questionnaireId': widget.qestion['questionnaireId'],
-          'responses': [
-            {
-              'id': 0,
-              'questionId': responseVariantId.toInt(),
-              'responseVariantId': id.toInt(),
-              // Уточните, какой ID нужно использовать
-              'alternativeResponse': '',
-              // Объединяем выбранные варианты в строку
-              'comentary': '',
-              // Пустая строка, замените на комментарий, если необходимо
-              'gradingType': widget.qestion['gradingType'].toInt(),
-              // Уточните, какой тип оценки нужно использовать
-              'dateResponse': DateTime.now().toIso8601String(),
-              // Текущая дата и время
-            }
-          ],
-          'licenseId': license
-        };
-        // Отправляем POST-запрос на сервер
-        final String basicAuth =
-            'Basic ' + base64Encode(utf8.encode('$username:$password'));
-        Uri url = Uri.parse(postResponse); // Замените на ваш URL
-        try {
-          final response =
-              await http.post(url, body: jsonEncode(requestBody), headers: {
-            'Authorization': basicAuth,
-            "Accept": "application/json",
-            "content-type": "application/json"
-          });
-          if (response.statusCode == 200) {
-            // Обработка успешного ответа от сервера
-            print('Response sent successfully.');
-          } else {
-            // Обработка ошибки
-            print(
-                'Failed to send response. Status code: ${response.statusCode}');
-          }
-        } catch (e) {
-          // Обработка ошибок сети
-          print('Error sending response: $e');
-        }
+        responsePostProvider.addResponse(
+        ResponsePost(
+          id: 0,
+          questionId: responseVariantId.toInt(),
+          responseVariantId: id.toInt(),
+          alternativeResponse: '',
+          commentary: '',
+          gradingType: widget.qestion['gradingType'].toInt(),
+          dateResponse: DateTime.now().toIso8601String(),
+        ));
+        print(responsePostProvider.responses.length);
       }
+
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -447,10 +483,42 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                     },
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const Questionnaires()),
-                    (route) => false),
+                onPressed: () async {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const Questionnaires()),
+                          (route) => false);
+                  List<ResponsePost> allResponses = responsePostProvider.responses;
+                  print("PostRespons: ${allResponses.toString()}");
+                  Map<String, dynamic> staticData = {
+                    "oid": 0,
+                    "questionnaireId": 0,
+                    "responses": allResponses,
+                    "licenseId": license,
+                  };
+                  final String basicAuth =
+                      'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+                  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+                  try {
+                    final response =
+                        await http.post(url, body: jsonEncode(staticData), headers: {
+                      'Authorization': basicAuth,
+                      "Accept": "application/json",
+                      "content-type": "application/json"
+                    });
+                    if (response.statusCode == 200) {
+                      // Обработка успешного ответа от сервера
+                      print('Response sent successfully.');
+                      responsePostProvider.clearResponses();
+                    } else {
+                      // Обработка ошибки
+                      print('Failed to send response. Status code: ${response.statusCode}');
+                    }
+                  } catch (e) {
+                    // Обработка ошибок сети
+                    print('Error sending response: $e');
+                  }
+                },
                 child: const Text(
                   'Ok',
                   style: TextStyle(

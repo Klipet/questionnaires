@@ -39,6 +39,18 @@ class _License extends State<License> {
         border: Border.all(color: textColor),
         borderRadius: BorderRadius.circular(3),
       ));
+  final putTheme = PinTheme(
+      width: 56,
+      height: 56,
+      textStyle: const TextStyle(
+          fontSize: 20,
+          color: Color.fromRGBO(30, 60, 87, 1),
+          fontWeight: FontWeight.w600),
+      decoration: BoxDecoration(
+        border: Border.all(color: textColor),
+        color: questionsGroupColor,
+        borderRadius: BorderRadius.circular(3),
+      ));
 
 
   void putLicenseID(String license, String deviceName) async {
@@ -217,6 +229,8 @@ class _License extends State<License> {
               ),
               const SizedBox(height: 32),
               Pinput(
+                  closeKeyboardWhenCompleted: false,
+                autofocus: true,
                 length: 9,
                 errorPinTheme: errorTheme,
                 defaultPinTheme: defaultPinTheme,
@@ -224,6 +238,7 @@ class _License extends State<License> {
                 showCursor: false,
                 onCompleted: (code) => getLicenseStatus(context, code),
                 forceErrorState: forceError,
+                submittedPinTheme: putTheme
               ),
               const SizedBox(height: 64),
               forceError ? Text(

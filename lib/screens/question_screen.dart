@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:questionnaires/screens/error_screen.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
 import 'package:questionnaires/screens/response_screen/build_point_then_score.dart';
@@ -7,6 +8,8 @@ import 'package:questionnaires/screens/response_screen/build_yes_no.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import 'package:http/http.dart' as http;
 import '../factory/questions.dart';
+import '../factory/response_post.dart';
+import '../provider/post_privider.dart';
 import '../util/colors.dart';
 import '../util/const_url.dart';
 import 'license.dart';
@@ -54,6 +57,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
     widget.oid;
     widget.language;
     String count = questions.length.toString();
+    final responsePostProvider =
+        Provider.of<ResponsePostProvider>(context, listen: false);
     return Scaffold(
         body: isLoading
             ? const Center(
@@ -66,7 +71,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     : PageView.builder(
                         itemCount: questions.length,
                         padEnds: false,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         // Отключает возможность скроллинга через слайд
                         pageSnapping: false,
                         controller: _pageViewController,
@@ -83,26 +88,133 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                 leading: index.toInt() == 0
                                     ? null
                                     : IconButton(
-                                        onPressed: () {
-                                          goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
-                                        },
-                                        icon: const Icon(Icons.arrow_back),
-                                        iconSize: 24,
-                                        color: Colors.white,
-                                      ),
+                                  icon: const Icon(Icons.arrow_back),
+                                  iconSize: 24,
+                                  color: Colors.white,
+                                  onPressed: () {
+                                    responsePostProvider.clearFirstResponse();
+                                    print(responsePostProvider.responses.length);
+                                    goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
+                                  },
+                                ),
                                 automaticallyImplyLeading: false,
                                 actions: [
                                   IconButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
                                     icon: const Icon(Icons.home_outlined),
                                     color: Colors.white,
                                     iconSize: 25,
+                                    onPressed: () {
+                                      showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (context) => AlertDialog(
+                                                  alignment: Alignment.center,
+                                                  title: Text(
+                                                    returnDialogTitleFinish(
+                                                        widget.language),
+                                                    textAlign: TextAlign.center,
+                                                    style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontFamily: 'RobotoBlack',
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                  content: Text(
+                                                    returnDialogMessageFinish(
+                                                        widget.language),
+                                                    textAlign: TextAlign.center,
+                                                    style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontFamily:
+                                                          'RobotoRegular',
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                    ),
+                                                  ),
+                                            actionsAlignment: MainAxisAlignment.center,
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      style: ButtonStyle(
+                                                        padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.only(left: 15)),
+                                                        alignment:
+                                                            Alignment.center,
+                                                        shape: MaterialStateProperty
+                                                            .all<
+                                                                RoundedRectangleBorder>(
+                                                          RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                        ),
+                                                        fixedSize:
+                                                            MaterialStateProperty.all(const Size(200, 57)),
+                                                        backgroundColor:
+                                                            MaterialStateProperty.resolveWith<Color>((Set<MaterialState>states) {
+                                                            if (states.contains(MaterialState.pressed)) {return Colors.green;}
+                                                            return questionsGroupColor;
+                                                          },
+                                                        ),
+                                                      ),
+                                                      onPressed: () {
+                                                        responsePostProvider.clearResponses();
+                                                        Navigator.of(context).pushAndRemoveUntil(
+                                                            MaterialPageRoute(
+                                                                builder: (context) => const Questionnaires()),
+                                                                (route) => false);
+                                                      },
+                                                      child: const Text(
+                                                        'Ok',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 24,
+                                                          fontFamily:
+                                                              'RobotoRegular',
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    ElevatedButton(
+                                                      style: ButtonStyle(
+                                                        alignment: Alignment.center,
+                                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8),),
+                                                        ),
+                                                        fixedSize:
+                                                        MaterialStateProperty.all(const Size(200, 57)),
+                                                        backgroundColor:
+                                                        MaterialStateProperty.resolveWith<Color>((Set<MaterialState>states) {
+                                                            if (states.contains(MaterialState.pressed)) {return Colors.red;}
+                                                            return Colors.red;
+                                                          },
+                                                        ),
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop();
+                                                      },
+                                                      child: const Text(
+                                                        'Cancel',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 24,
+                                                          fontFamily:
+                                                          'RobotoRegular',
+                                                          fontWeight:
+                                                          FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ]));
+                                    },
                                   ),
                                 ],
                                 title: Text(
-                                  (index + 1).toString() + " / " + count.toString(),
+                                  (index + 1).toString() +
+                                      " / " +
+                                      count.toString(),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(color: Colors.white),
                                 ),
@@ -158,6 +270,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       }
     });
   }
+
   void goToPreviousPage() {
     if (_currentPageIndex > 0) {
       _pageViewController.previousPage(
@@ -209,10 +322,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
         setState(() {
           isLoading = false;
         });
-      }else if(errorcode == 124){
+      } else if (errorcode == 124) {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const License()),
-                (route) => false);
+            (route) => false);
       }
     }
   }
@@ -307,6 +420,32 @@ class _QuestionScreenState extends State<QuestionScreen> {
       }
     }
     return const Center();
+  }
+
+  String returnDialogMessageFinish(String language) {
+    String enName = 'Exiting the survey will lead to deletion of all your responses. Continue?';
+    String roName = 'Ieșirea din sondaj va duce la ștergerea tuturor răspunsurilor tale. Continuați?';
+    String ruName = 'Выход из опроса приведет к удалению всех ваших ответов. Продолжить?';
+    if (language == 'RO') {
+      return roName;
+    } else if (language == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
+
+  String returnDialogTitleFinish(String language) {
+    String enName = 'Attention!';
+    String roName = 'Atenție!';
+    String ruName = 'Внимание!';
+    if (language == 'RO') {
+      return roName;
+    } else if (language == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
   }
 
 //}

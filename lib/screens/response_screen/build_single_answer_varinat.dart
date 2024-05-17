@@ -3,8 +3,11 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
+import '../../factory/response_post.dart';
+import '../../provider/post_privider.dart';
 import '../../util/colors.dart';
 import '../questionnaires.dart';
 
@@ -27,7 +30,7 @@ class SingleAnswerVariant extends StatefulWidget {
       required this.onPressed,
       required this.id,
       required this.onPressedController,
-      required this.totalQuestionsCount});
+      required this.totalQuestionsCount,});
 
   @override
   State<SingleAnswerVariant> createState() => _SingleAnswerVariantState();
@@ -101,12 +104,9 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
-                        int selectedIndexTemp = index;
-                        selectedIndex = selectedIndexTemp;
-
+                        selectedIndex = index;
                         responseChec.clear();
-                        responseChec.add(widget.qestion['responseVariants']
-                        [selectedIndexTemp]);
+                        responseChec.add(widget.qestion['responseVariants'][index]);
                         print("Response Map : ${responseChec[0]}");
                       });
                     },
@@ -349,54 +349,67 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     print("Qestion Map : ${responseChec}");
+    var id = responseChec[0]['id'];
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      var id = responseChec[0]['id'];
-      var responseVariantId = responseChec[0]['questionId'];
-      Map<String, dynamic> requestBody = {
-        'oid': 0,
-        'questionnaireId': widget.qestion['questionnaireId'],
-        'responses': [
-          {
-            'id': 0,
-            'questionId': responseVariantId.toInt(),
-            'responseVariantId': id.toInt(),
-            // Уточните, какой ID нужно использовать
-            'alternativeResponse': '',
-            // Объединяем выбранные варианты в строку
-            'comentary': '',
-            // Пустая строка, замените на комментарий, если необходимо
-            'gradingType': widget.qestion['gradingType'].toInt(),
-            // Уточните, какой тип оценки нужно использовать
-            'dateResponse': DateTime.now().toIso8601String(),
-            // Текущая дата и время
-          }
-        ],
-        'licenseId': license
-      };
-      // Отправляем POST-запрос на сервер
-      final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      Uri url = Uri.parse(postResponse); // Замените на ваш URL
-      try {
-        final response =
-            await http.post(url, body: jsonEncode(requestBody), headers: {
-          'Authorization': basicAuth,
-          "Accept": "application/json",
-          "content-type": "application/json"
-        });
-        if (response.statusCode == 200) {
-          // Обработка успешного ответа от сервера
-          print('Response sent successfully.');
-        } else {
-          // Обработка ошибки
-          print('Failed to send response. Status code: ${response.statusCode}');
-        }
-      } catch (e) {
-        // Обработка ошибок сети
-        print('Error sending response: $e');
-      }
+
+      responsePostProvider.addResponse(ResponsePost(
+        id: 0,
+        questionId: widget.qestion['id'],
+        responseVariantId: id,
+        alternativeResponse: '',
+        commentary: '',
+        gradingType: widget.qestion['gradingType'].toInt(),
+        dateResponse: DateTime.now().toIso8601String(),
+      ));
+      print(responsePostProvider.responses.length);
+    //  var id = responseChec[0]['id'];
+    //  var responseVariantId = responseChec[0]['questionId'];
+    //  Map<String, dynamic> requestBody = {
+    //    'oid': 0,
+    //    'questionnaireId': widget.qestion['questionnaireId'],
+    //    'responses': [
+    //      {
+    //        'id': 0,
+    //        'questionId': responseVariantId.toInt(),
+    //        'responseVariantId': id.toInt(),
+    //        // Уточните, какой ID нужно использовать
+    //        'alternativeResponse': '',
+    //        // Объединяем выбранные варианты в строку
+    //        'comentary': '',
+    //        // Пустая строка, замените на комментарий, если необходимо
+    //        'gradingType': widget.qestion['gradingType'].toInt(),
+    //        // Уточните, какой тип оценки нужно использовать
+    //        'dateResponse': DateTime.now().toIso8601String(),
+    //        // Текущая дата и время
+    //      }
+    //    ],
+    //    'licenseId': license
+    //  };
+    //  // Отправляем POST-запрос на сервер
+    //  final String basicAuth =
+    //      'Basic ' + base64Encode(utf8.encode('$username:$password'));
+    //  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+    //  try {
+    //    final response =
+    //        await http.post(url, body: jsonEncode(requestBody), headers: {
+    //      'Authorization': basicAuth,
+    //      "Accept": "application/json",
+    //      "content-type": "application/json"
+    //    });
+    //    if (response.statusCode == 200) {
+    //      // Обработка успешного ответа от сервера
+    //      print('Response sent successfully.');
+    //    } else {
+    //      // Обработка ошибки
+    //      print('Failed to send response. Status code: ${response.statusCode}');
+    //    }
+    //  } catch (e) {
+    //    // Обработка ошибок сети
+    //    print('Error sending response: $e');
+    //  }
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -450,10 +463,43 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                     },
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const Questionnaires()),
-                    (route) => false),
+                onPressed: () async {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const Questionnaires()),
+                          (route) => false);
+                  List<ResponsePost> allResponses = responsePostProvider.responses;
+                  print("PostRespons: ${allResponses.toString()}");
+                  Map<String, dynamic> staticData = {
+                    "oid": 0,
+                    "questionnaireId": 0,
+                    "responses": allResponses,
+                    "licenseId": license,
+
+                  };
+                  final String basicAuth =
+                      'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+                  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+                  try {
+                    final response =
+                        await http.post(url, body: jsonEncode(staticData), headers: {
+                      'Authorization': basicAuth,
+                      "Accept": "application/json",
+                      "content-type": "application/json"
+                    });
+                    if (response.statusCode == 200) {
+                      // Обработка успешного ответа от сервера
+                      print('Response sent successfully.');
+                      responsePostProvider.clearResponses();
+                    } else {
+                      // Обработка ошибки
+                      print('Failed to send response. Status code: ${response.statusCode}');
+                    }
+                  } catch (e) {
+                    // Обработка ошибок сети
+                    print('Error sending response: $e');
+                  }
+                },
                 child: const Text(
                   'Ok',
                   style: TextStyle(

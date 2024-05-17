@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import '../../provider/post_privider.dart';
+import '../../factory/response_post.dart';
+import '../../save_response/multe_ansver_vatinat.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
@@ -26,7 +30,7 @@ class PointThenScore extends StatefulWidget {
       required this.onPressed,
       required this.id,
       required this.onPressedController,
-      required this.totalQuestionsCount});
+      required this.totalQuestionsCount, });
 
   @override
   State<PointThenScore> createState() => _PointThenScoreState();
@@ -36,13 +40,41 @@ class _PointThenScoreState extends State<PointThenScore> {
   bool isCheckedFirstButton = false;
   int? selectedIndex;
   late List<bool> isCheckedList;
-  late List<dynamic> responseChec;
+  late List<int> responseChec;
+  ResponsePostProvider responseProvider = ResponsePostProvider();
 
   @override
   void initState() {
     isCheckedList = List.generate(10, (index) => false);
     responseChec = [];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedResponses();
+    });
     super.initState();
+  }
+  void _loadSavedResponses() {
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
+    selectedIndex;
+    if (savedResponses != null) {
+      setState(() {
+        for (int i = 0; i < savedResponses.length; i++) {
+          responseChec[savedResponses[i]];
+          //  responseChec.add(widget.qestion['responseVariants'][savedResponses[i]]);
+        }
+      });
+    }
+  }
+
+  void _saveResponses() {
+    List<int> selectedIndices = [];
+    for (int i = 0; i < responseChec.length; i++) {
+      if (responseChec[i].isNaN) {
+        selectedIndices.add(i);
+      }
+    }
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
   }
 
   @override
@@ -165,46 +197,43 @@ class _PointThenScoreState extends State<PointThenScore> {
     bool isPressed = i == selectedIndex; // Получаем состояние нажатия кнопки
     return ElevatedButton(
       onPressed: () {
+        responseChec.add(i);
         // Действие при нажатии на кнопку
         setState(() {
           selectedIndex = i;
+          responseChec.add(selectedIndex!);
+          _saveResponses();
         });
       },
-      style: isPressed
-          ? OutlinedButton.styleFrom(
-              shape: const CircleBorder(),
-              side: BorderSide(
-                color: buttonColor, // Устанавливаем цвет рамки при нажатии
-                width: 4.0, // Устанавливаем ширину рамки
-              ),
-              fixedSize: const Size.square(95),
-            )
-          : ElevatedButton.styleFrom(
-              shape: const CircleBorder(),
-              fixedSize: const Size.square(95),
-              backgroundColor: buttonColor,
-              padding: const EdgeInsets.all(20),
-            ),
-      child: isPressed
-          ? Text(
-              (i + 1).toString(),
-              style: TextStyle(
-                color: buttonColor,
-                fontFamily: 'RobotoRegular',
-                fontSize: 36,
-                fontWeight: FontWeight.w900,
-              ),
-            )
-          : Text(
-              (i + 1).toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'RobotoRegular',
-                fontSize: 36,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-    );
+      style: isPressed ? OutlinedButton.styleFrom(
+        shape: const CircleBorder(),
+        side: BorderSide(
+          color: buttonColor, // Устанавливаем цвет рамки при нажатии
+          width: 4.0, // Устанавливаем ширину рамки
+        ),
+        fixedSize: const Size.square(95),
+      ) : ElevatedButton.styleFrom(
+        shape: const CircleBorder(),
+        fixedSize: const Size.square(95),
+        backgroundColor: buttonColor,
+        padding: const EdgeInsets.all(20),
+      ), child: isPressed ? Text(
+      (i + 1).toString(),
+      style: TextStyle(
+        color: buttonColor,
+        fontFamily: 'RobotoRegular',
+        fontSize: 36,
+        fontWeight: FontWeight.w900,
+      ),
+    ) : Text(
+      (i + 1).toString(),
+      style: const TextStyle(
+        color: Colors.white,
+        fontFamily: 'RobotoRegular',
+        fontSize: 36,
+        fontWeight: FontWeight.w900,
+      ),
+    ),);
   }
 
   String returnButtonNext(String localeCod) {
@@ -340,53 +369,66 @@ class _PointThenScoreState extends State<PointThenScore> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
+    String response = (selectedIndex! + 1).toString();
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
 
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      String response = (selectedIndex! + 1).toString();
-      Map<String, dynamic> requestBody = {
-        'oid': 0,
-        'questionnaireId': widget.qestion['questionnaireId'],
-        'responses': [
-          {
-            'id': 0,
-            'questionId': widget.qestion['id'],
-            'responseVariantId': 0,
-            // Уточните, какой ID нужно использовать
-            'alternativeResponse': response,
-            // Объединяем выбранные варианты в строку
-            'comentary': '',
-            // Пустая строка, замените на комментарий, если необходимо
-            'gradingType': widget.qestion['gradingType'].toInt(),
-            // Уточните, какой тип оценки нужно использовать
-            'dateResponse': DateTime.now().toIso8601String(),
-            // Текущая дата и время
-          }
-        ],
-        'licenseId': license
-      };
-      // Отправляем POST-запрос на сервер
-      final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      Uri url = Uri.parse(postResponse); // Замените на ваш URL
-      try {
-        final response =
-            await http.post(url, body: jsonEncode(requestBody), headers: {
-          'Authorization': basicAuth,
-          "Accept": "application/json",
-          "content-type": "application/json"
-        });
-        if (response.statusCode == 200) {
-          // Обработка успешного ответа от сервера
-          print('Response sent successfully.');
-        } else {
-          // Обработка ошибки
-          print('Failed to send response. Status code: ${response.statusCode}');
-        }
-      } catch (e) {
-        // Обработка ошибок сети
-        print('Error sending response: $e');
-      }
+      responsePostProvider.addResponse(ResponsePost(
+        id: 0,
+        questionId: widget.qestion['id'],
+        responseVariantId: 0,
+        alternativeResponse: response,
+        commentary: '',
+        gradingType: widget.qestion['gradingType'].toInt(),
+        dateResponse: DateTime.now().toIso8601String(),
+      ));
+
+      print(responsePostProvider.responses.length);
+    //
+    //  Map<String, dynamic> requestBody = {
+    //    'oid': 0,
+    //    'questionnaireId': widget.qestion['questionnaireId'],
+    //    'responses': [
+    //      {
+    //        'id': 0,
+    //        'questionId': widget.qestion['id'],
+    //        'responseVariantId': 0,
+    //        // Уточните, какой ID нужно использовать
+    //        'alternativeResponse': response,
+    //        // Объединяем выбранные варианты в строку
+    //        'comentary': '',
+    //        // Пустая строка, замените на комментарий, если необходимо
+    //        'gradingType': widget.qestion['gradingType'].toInt(),
+    //        // Уточните, какой тип оценки нужно использовать
+    //        'dateResponse': DateTime.now().toIso8601String(),
+    //        // Текущая дата и время
+    //      }
+    //    ],
+    //    'licenseId': license
+    //  };
+    //  // Отправляем POST-запрос на сервер
+    //  final String basicAuth =
+    //      'Basic ' + base64Encode(utf8.encode('$username:$password'));
+    //  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+    //  try {
+    //    final response =
+    //        await http.post(url, body: jsonEncode(requestBody), headers: {
+    //      'Authorization': basicAuth,
+    //      "Accept": "application/json",
+    //      "content-type": "application/json"
+    //    });
+    //    if (response.statusCode == 200) {
+    //      // Обработка успешного ответа от сервера
+    //      print('Response sent successfully.');
+    //    } else {
+    //      // Обработка ошибки
+    //      print('Failed to send response. Status code: ${response.statusCode}');
+    //    }
+    //  } catch (e) {
+    //    // Обработка ошибок сети
+    //    print('Error sending response: $e');
+    //  }
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -440,10 +482,43 @@ class _PointThenScoreState extends State<PointThenScore> {
                     },
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const Questionnaires()),
-                    (route) => false),
+                onPressed: () async {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const Questionnaires()),
+                          (route) => false);
+                  List<ResponsePost> allResponses = responsePostProvider.responses;
+                  print("PostRespons: ${allResponses.toString()}");
+                  Map<String, dynamic> staticData = {
+                    "oid": 0,
+                    "questionnaireId": 0,
+                    "responses": allResponses,
+                    "licenseId": license,
+
+                  };
+                  final String basicAuth =
+                      'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+                  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+                  try {
+                    final response =
+                        await http.post(url, body: jsonEncode(staticData), headers: {
+                      'Authorization': basicAuth,
+                      "Accept": "application/json",
+                      "content-type": "application/json"
+                    });
+                    if (response.statusCode == 200) {
+                      // Обработка успешного ответа от сервера
+                      print('Response sent successfully.');
+                      responsePostProvider.clearResponses();
+                    } else {
+                      // Обработка ошибки
+                      print('Failed to send response. Status code: ${response.statusCode}');
+                    }
+                  } catch (e) {
+                    // Обработка ошибок сети
+                    print('Error sending response: $e');
+                  }
+                },
                 child: const Text(
                   'Ok',
                   style: TextStyle(

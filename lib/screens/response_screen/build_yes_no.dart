@@ -2,7 +2,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
+import '../../provider/post_privider.dart';
+import '../../factory/response_post.dart';
+import '../../save_response/yes_no_variant.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
@@ -41,9 +45,41 @@ class _YesNoVariantState extends State<YesNoVariant> {
   void initState() {
     responseChec = [];
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedResponses();
+    });
+  }
+  void _loadSavedResponses() {
+    final variant = Provider.of<YesNoVariantResponse>(context, listen: false);
+    List<String>? savedResponses = variant.getResponse(widget.index);
+    if (savedResponses != null) {
+      setState(() {
+        for (int i = 0; i < savedResponses.length; i++) {
+          if (savedResponses[i] == 'true') {
+            isCheckedFirstButton = true;
+            isCheckedSecondButton = false;
+          } else if (savedResponses[i] == 'false') {
+            isCheckedFirstButton = false;
+            isCheckedSecondButton = true;
+          }
+        //  responseChec.add(widget.qestion['responseVariants'][savedResponses[i]]);
+        }
+      });
+    }
   }
 
-  @override
+  void _saveResponses() {
+    List<String> selectedIndices = [];
+    if (isCheckedFirstButton) {
+      selectedIndices.add('true');
+    } else if (isCheckedSecondButton) {
+      selectedIndices.add('false');
+    }
+    final multeAnsverVatinatResponse = Provider.of<YesNoVariantResponse>(
+        context, listen: false);
+    multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
+  }
+    @override
   Widget build(BuildContext context) {
     String coment = returnQestinComment(widget.language);
     String title = returnQestinName(widget.language);
@@ -81,8 +117,9 @@ class _YesNoVariantState extends State<YesNoVariant> {
                 IconButton(
                   icon: Icon(
                     !isCheckedFirstButton
-                        ? Icons.check_circle_outline
-                        : Icons.check_circle,
+                        ? Icons.check_circle
+                        : Icons.check_circle_outline
+                         ,
                     color: questionsGroupColor,
                     size: 150,
                   ),
@@ -94,6 +131,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
                         isCheckedSecondButton = false;
                       }
                       responseChec.add(widget.qestion['responseVariants']);
+                      _saveResponses();
                     });
                   },
                 ),
@@ -101,8 +139,8 @@ class _YesNoVariantState extends State<YesNoVariant> {
                 IconButton(
                   icon: Icon(
                     !isCheckedSecondButton
-                        ? Icons.cancel_outlined
-                        : Icons.cancel,
+                        ? Icons.cancel
+                        : Icons.cancel_outlined,
                     color: Colors.red,
                     size: 150,
                   ),
@@ -115,6 +153,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
                             false; // сбрасываем состояние первой кнопки при нажатии на вторую
                       }
                       responseChec.add(widget.qestion['responseVariants']);
+                      _saveResponses();
                     });
                   },
                 )
@@ -305,6 +344,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
     String valueToSend = '';
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
 
     if (isCheckedFirstButton == true) {
       valueToSend = 'true';
@@ -315,49 +355,17 @@ class _YesNoVariantState extends State<YesNoVariant> {
     }
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      Map<String, dynamic> requestBody = {
-        'oid': 0,
-        'questionnaireId': widget.qestion['questionnaireId'],
-        'responses': [
-          {
-            'id': 0,
-            'questionId': widget.qestion['id'],
-            'responseVariantId': 0,
-            // Уточните, какой ID нужно использовать
-            'alternativeResponse': valueToSend,
-            // Объединяем выбранные варианты в строку
-            'comentary': '',
-            // Пустая строка, замените на комментарий, если необходимо
-            'gradingType': widget.qestion['gradingType'].toInt(),
-            // Уточните, какой тип оценки нужно использовать
-            'dateResponse': DateTime.now().toIso8601String(),
-            // Текущая дата и время
-          }
-        ],
-        'licenseId': license
-      };
-      // Отправляем POST-запрос на сервер
-      final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      Uri url = Uri.parse(postResponse); // Замените на ваш URL
-      try {
-        final response =
-            await http.post(url, body: jsonEncode(requestBody), headers: {
-          'Authorization': basicAuth,
-          "Accept": "application/json",
-          "content-type": "application/json"
-        });
-        if (response.statusCode == 200) {
-          // Обработка успешного ответа от сервера
-          print('Response sent successfully.');
-        } else {
-          // Обработка ошибки
-          print('Failed to send response. Status code: ${response.statusCode}');
-        }
-      } catch (e) {
-        // Обработка ошибок сети
-        print('Error sending response: $e');
-      }
+      responseChec.add(valueToSend);
+      responsePostProvider.addResponse( ResponsePost(
+        id: 0,
+        questionId: widget.qestion['id'],
+        responseVariantId: 0,
+        alternativeResponse: valueToSend,
+        commentary: '',
+        gradingType: widget.qestion['gradingType'].toInt(),
+        dateResponse: DateTime.now().toIso8601String(),
+      ));
+      print(responsePostProvider.responses.length);
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -411,10 +419,40 @@ class _YesNoVariantState extends State<YesNoVariant> {
                     },
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const Questionnaires()),
-                    (route) => false),
+                onPressed: () async {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const Questionnaires()),
+                          (route) => false);
+                  Map<String, dynamic> staticData = {
+                    "oid": 0,
+                    "questionnaireId": 0,
+                    "licenseId": license,
+                  };
+                  // Добавьте поле "responses" к объекту статических данных
+                //  staticData['responses'] = responses.map((response) => response.toJson()).toList();
+                  final String basicAuth =
+                       'Basic ' + base64Encode(utf8.encode('$username:$password'));
+                    Uri url = Uri.parse(postResponse); // Замените на ваш URL
+                    try {
+                      final response =
+                          await http.post(url, body: jsonEncode(staticData), headers: {
+                        'Authorization': basicAuth,
+                        "Accept": "application/json",
+                        "content-type": "application/json"
+                      });
+                      if (response.statusCode == 200) {
+                        // Обработка успешного ответа от сервера
+                        print('Response sent successfully.');
+                      } else {
+                        // Обработка ошибки
+                        print('Failed to send response. Status code: ${response.statusCode}');
+                      }
+                    } catch (e) {
+                      // Обработка ошибок сети
+                      print('Error sending response: $e');
+                    }
+                },
                 child: const Text(
                   'Ok',
                   style: TextStyle(

@@ -28,7 +28,7 @@ class _Splash extends State<Splash> with TickerProviderStateMixin {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     _controller = AnimationController(
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 1),
       vsync: this,
     );
     _animation = CurvedAnimation(
