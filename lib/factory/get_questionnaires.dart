@@ -21,11 +21,11 @@ class GetQuestionnaires {
 
   factory GetQuestionnaires.fromJson(Map<String, dynamic> json) {
     return GetQuestionnaires(
-      oid: json['oid']?? '',
+      oid: json['oid']?? 0,
       name: json['name']?? '',
       createDate: json['createDate']?? '',
-      updateDate: _toDate(json['updateDate']?? ''),
-      status: json['status'],
+      updateDate: _toDate(json['updateDate']) ?? 'Null',
+      status: json['status'] ?? 0,
       errorMessage: json['errorMessage'] ?? '',
       errorName: json['errorName'] ?? '',
       errorCode: json['errorCode']?? 0,
@@ -36,7 +36,7 @@ class GetQuestionnaires {
     if (date == null) {
       return ''; // or any other default value as per your requirement
     } else if (date is String) {
-      return date; // if date is already a string, return it
+      return ''; // if date is already a string, return it
     } else {
       // Handle other cases if needed
       return '';
