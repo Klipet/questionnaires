@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../provider/post_privider.dart';
 import '../../factory/response_post.dart';
 import '../../save_response/multe_ansver_vatinat.dart';
+import '../../save_response/yes_no_variant.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
@@ -55,26 +56,20 @@ class _PointThenScoreState extends State<PointThenScore> {
   void _loadSavedResponses() {
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
     List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
-    selectedIndex;
-    if (savedResponses != null) {
+    if (savedResponses != null && savedResponses.isNotEmpty) {
       setState(() {
-        for (int i = 0; i < savedResponses.length; i++) {
-          responseChec[savedResponses[i]];
-          //  responseChec.add(widget.qestion['responseVariants'][savedResponses[i]]);
-        }
+        selectedIndex = savedResponses[0];
+        isCheckedList[selectedIndex!] = true;
       });
     }
   }
 
   void _saveResponses() {
-    List<int> selectedIndices = [];
-    for (int i = 0; i < responseChec.length; i++) {
-      if (responseChec[i].isNaN) {
-        selectedIndices.add(i);
-      }
+    if (selectedIndex != null) {
+      List<int> selectedIndices = [selectedIndex!];
+      final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+      multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
     }
-    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
-    multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
   }
 
   @override
@@ -201,7 +196,9 @@ class _PointThenScoreState extends State<PointThenScore> {
         // Действие при нажатии на кнопку
         setState(() {
           selectedIndex = i;
-          responseChec.add(selectedIndex!);
+          for (int j = 0; j < isCheckedList.length; j++) {
+            isCheckedList[j] = j == i;
+          }
           _saveResponses();
         });
       },
@@ -371,7 +368,8 @@ class _PointThenScoreState extends State<PointThenScore> {
     var license = await shered.getString("licenseID");
     String response = (selectedIndex! + 1).toString();
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
-
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
       responsePostProvider.addResponse(ResponsePost(
@@ -510,6 +508,8 @@ class _PointThenScoreState extends State<PointThenScore> {
                       // Обработка успешного ответа от сервера
                       print('Response sent successfully.');
                       responsePostProvider.clearResponses();
+                      multeAnsverVatinatResponse.clearResponseVariant();
+                      yesAndNo.clearResponseVariant();
                     } else {
                       // Обработка ошибки
                       print('Failed to send response. Status code: ${response.statusCode}');

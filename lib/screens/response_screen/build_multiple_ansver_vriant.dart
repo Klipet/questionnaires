@@ -7,6 +7,7 @@ import 'package:questionnaires/save_response/multe_ansver_vatinat.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import '../../factory/response_post.dart';
+import '../../save_response/yes_no_variant.dart';
 import '../../util/colors.dart';
 import '../questionnaires.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -46,7 +47,9 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
     isCheckedList = List.generate(countColunm(), (index) => false);
     responseChec = [];
     _scrollController.addListener(_scrollListener);
-    _loadSavedResponses();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedResponses();
+    });
     super.initState();
   }
   void _loadSavedResponses() {
@@ -120,7 +123,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
             ),
           ),
           const SizedBox(height: 20),
-          AutoSizeText('($coment)',
+          AutoSizeText( coment,
               minFontSize: 22,
               maxLines: 2,
               style: const TextStyle(
@@ -136,12 +139,11 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
           //    interactive: true,
           //    trackVisibility: true,
           //    thumbVisibility: true,
-            child:
-            GridView.builder(
+            child: GridView.builder(
             //  controller: _scrollController,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisExtent: 125,
+                mainAxisExtent: 80,
               ),
               itemCount: countColunm(),
               itemBuilder: (context, index) {
@@ -162,6 +164,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                     });
                   },
                   child: Container(
+                    width: 25,
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
                       children: [
@@ -412,6 +415,8 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
     print("Qestion Map : ${widget.qestion}");
     try {
       for (int i = 0; i < responseChec.length; i++) {
@@ -510,6 +515,8 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                       // Обработка успешного ответа от сервера
                       print('Response sent successfully.');
                       responsePostProvider.clearResponses();
+                      multeAnsverVatinatResponse.clearResponseVariant();
+                      yesAndNo.clearResponseVariant();
                     } else {
                       // Обработка ошибки
                       print('Failed to send response. Status code: ${response.statusCode}');

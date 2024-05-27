@@ -10,6 +10,8 @@ import 'package:http/http.dart' as http;
 import '../factory/questions.dart';
 import '../factory/response_post.dart';
 import '../provider/post_privider.dart';
+import '../save_response/multe_ansver_vatinat.dart';
+import '../save_response/yes_no_variant.dart';
 import '../util/colors.dart';
 import '../util/const_url.dart';
 import 'license.dart';
@@ -57,8 +59,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
     widget.oid;
     widget.language;
     String count = questions.length.toString();
-    final responsePostProvider =
-        Provider.of<ResponsePostProvider>(context, listen: false);
+    final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
     return Scaffold(
         body: isLoading
             ? const Center(
@@ -107,13 +110,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                       showDialog(
                                           context: context,
                                           barrierDismissible: false,
-                                          builder: (context) => AlertDialog(
-                                                  alignment: Alignment.center,
-                                                  title: Text(
-                                                    returnDialogTitleFinish(
-                                                        widget.language),
-                                                    textAlign: TextAlign.center,
-                                                    style: const TextStyle(
+                                          builder: (context) => AlertDialog(alignment: Alignment.center,
+                                                  title: Text(returnDialogTitleFinish(widget.language), textAlign: TextAlign.center, style: const TextStyle(
                                                       fontSize: 24,
                                                       fontFamily: 'RobotoBlack',
                                                       fontWeight:
@@ -121,8 +119,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                                     ),
                                                   ),
                                                   content: Text(
-                                                    returnDialogMessageFinish(
-                                                        widget.language),
+                                                    returnDialogMessageFinish(widget.language),
                                                     textAlign: TextAlign.center,
                                                     style: const TextStyle(
                                                       fontSize: 24,
@@ -159,15 +156,17 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                                         ),
                                                       ),
                                                       onPressed: () {
+                                                        multeAnsverVatinatResponse.clearResponseVariant();
+                                                        yesAndNo.clearResponseVariant();
                                                         responsePostProvider.clearResponses();
                                                         Navigator.of(context).pushAndRemoveUntil(
                                                             MaterialPageRoute(
                                                                 builder: (context) => const Questionnaires()),
                                                                 (route) => false);
                                                       },
-                                                      child: const Text(
-                                                        'Ok',
-                                                        style: TextStyle(
+                                                      child: Text(
+                                                        returnDialogOK(widget.language),
+                                                        style: const TextStyle(
                                                           color: Colors.white,
                                                           fontSize: 24,
                                                           fontFamily:
@@ -195,9 +194,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                                       onPressed: () {
                                                         Navigator.of(context).pop();
                                                       },
-                                                      child: const Text(
-                                                        'Cancel',
-                                                        style: TextStyle(
+                                                      child: Text(
+                                                        returnDialogCancel(widget.language),
+                                                        style: const TextStyle(
                                                           color: Colors.white,
                                                           fontSize: 24,
                                                           fontFamily:
@@ -306,28 +305,34 @@ class _QuestionScreenState extends State<QuestionScreen> {
         questionsList = responseDate['questionnaire']['questions'];
         questions = parseQuestionaires(responseDate);
         List<dynamic> allQuestions = responseDate['questionnaire']['questions'];
-        Map<String, dynamic> qestionFirst = allQuestions[0];
-        Map<String, dynamic> questionMap = jsonDecode(qestionFirst['question']);
-
-        String titleQestion = questionMap[widget.language];
-        if (titleQestion == '') {
+        if(allQuestions.isEmpty){
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => ErrorScreen(language: widget.language)),
+                  (route) => false);
+        }else{
+          Map<String, dynamic> qestionFirst = allQuestions[0];
+          Map<String, dynamic> questionMap = jsonDecode(qestionFirst['question']);
+          String titleQestion = questionMap[widget.language];
+          if (titleQestion == '') {
+            setState(() {
+              hasError = true;
+            });
+          } else {
+            setState(() {
+              hasError = false;
+            });
+          }
           setState(() {
-            hasError = true;
-          });
-        } else {
-          setState(() {
-            hasError = false;
+            isLoading = false;
           });
         }
-        setState(() {
-          isLoading = false;
-        });
-      } else if (errorcode == 124) {
-        Navigator.of(context).pushAndRemoveUntil(
+          } else if (errorcode == 124) {
+             Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const License()),
-            (route) => false);
+                (route) => false);
       }
     }
+
   }
 
   List<String> returnLanguage(String localeCod) {
@@ -439,6 +444,30 @@ class _QuestionScreenState extends State<QuestionScreen> {
     String enName = 'Attention!';
     String roName = 'Atenție!';
     String ruName = 'Внимание!';
+    if (language == 'RO') {
+      return roName;
+    } else if (language == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
+  String returnDialogOK(String language) {
+    String enName = 'Ok';
+    String roName = 'Bine';
+    String ruName = 'Хорошо';
+    if (language == 'RO') {
+      return roName;
+    } else if (language == 'RU') {
+      return ruName;
+    } else {
+      return enName;
+    }
+  }
+  String returnDialogCancel(String language) {
+    String enName = 'Cancel';
+    String roName = 'Anulare';
+    String ruName = 'Отмена';
     if (language == 'RO') {
       return roName;
     } else if (language == 'RU') {

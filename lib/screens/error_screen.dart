@@ -15,7 +15,7 @@ class ErrorScreen extends StatefulWidget {
 }
 
 class _ErrorScreenState extends State<ErrorScreen> {
-  int _secondsRemaining = 10;
+  int _secondsRemaining = 5;
   late Timer _timer;
 
   @override
@@ -56,14 +56,35 @@ class _ErrorScreenState extends State<ErrorScreen> {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 20),
-              child: Text(
-                _secondsRemaining.toString(),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontFamily: 'RobotoRegular',
-                  fontWeight: FontWeight.w400,
+              child: ElevatedButton(
+                  onPressed: () {  },
+                style: ButtonStyle(
+                alignment: Alignment.center,
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                fixedSize: MaterialStateProperty.all(const Size(10, 10)),
+                backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                    if (states.contains(MaterialState.pressed)) {
+                      return questionsGroupColor;
+                    }
+                    return questionsGroupColor;
+                  },
                 ),
               ),
+                child:Text(
+                  _secondsRemaining.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontFamily: 'RobotoRegular',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              )
             )
           ],
         ),
@@ -98,7 +119,7 @@ class _ErrorScreenState extends State<ErrorScreen> {
     String enName =
         'The questionnaire is not ready yet, but we are actively working on it. It will be available for filling out soon. Thank you for your understanding!';
     String roName =
-        'Questionarul nu este încă pregătit, dar lucrăm activ la el. În curând va fi disponibil pentru completare. Mulțumim pentru înțelegere!';
+        'Chestionaru nu este încă pregătit, dar lucrăm activ la el. În curând va fi disponibil pentru completare. Mulțumim pentru înțelegere!';
     String ruName =
         'Опросник еще не готов, но мы активно работаем над ним. Скоро будет доступен для заполнения. Спасибо за понимание!';
     if (localeCod == 'RO') {

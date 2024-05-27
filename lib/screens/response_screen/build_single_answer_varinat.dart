@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:questionnaires/save_response/yes_no_variant.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import '../../factory/response_post.dart';
 import '../../provider/post_privider.dart';
+import '../../save_response/multe_ansver_vatinat.dart';
 import '../../util/colors.dart';
 import '../questionnaires.dart';
 
@@ -38,16 +39,34 @@ class SingleAnswerVariant extends StatefulWidget {
 
 class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
   late bool isCheckedList = false;
-  late List<dynamic> responseChec;
-  late ScrollController _scrollController;
+  late List<dynamic> responseChec = [];
   int? selectedIndex;
 
   @override
   void initState() {
     // isCheckedList = List.generate(countColunm(), (index) => false);
-    responseChec = [];
-    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedResponses();
+    });
     super.initState();
+  }
+  void _loadSavedResponses() {
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
+    if (savedResponses != null && savedResponses.isNotEmpty) {
+      setState(() {
+        selectedIndex = savedResponses[0];
+      });
+      print("Qestion response save : ${selectedIndex}");
+    }
+  }
+
+  void _saveResponses() {
+    if (selectedIndex != null) {
+      List<int> selectedIndices = [selectedIndex!];
+      final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+      multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
+    }
   }
 
   @override
@@ -84,22 +103,22 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
               )),
           const SizedBox(height: 50),
           Expanded(
-            child:
-            Scrollbar(
-              thickness: 5,
-              radius: Radius.circular(2),
-             controller: _scrollController,
-              interactive: true,
-              trackVisibility: true,
-              thumbVisibility: true,
+        //    child:
+        //    Scrollbar(
+        //      thickness: 5,
+        //      radius: Radius.circular(2),
+        //      interactive: true,
+        //      trackVisibility: true,
+        //      thumbVisibility: true,
               child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisExtent: 90,
+                mainAxisExtent: 80,
               ),
               itemCount: countColunm(),
               itemBuilder: (context, index) {
                 return Container(
+                  width: 60,
                   padding: const EdgeInsets.all(8.0),
                   child: GestureDetector(
                     onTap: () {
@@ -108,9 +127,12 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                         responseChec.clear();
                         responseChec.add(widget.qestion['responseVariants'][index]);
                         print("Response Map : ${responseChec[0]}");
+                        _saveResponses();
                       });
                     },
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.max,
                       children: [
                         IconButton(
                           onPressed: null,
@@ -124,7 +146,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                             size: 56,
                           ),
                         ),
-                        SizedBox(width: 8.0),
+                        const SizedBox(width: 8.0),
                         Flexible(
                           child: AutoSizeText(
                             returnResponse(widget.language)[index],
@@ -144,8 +166,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                 );
               },
             ),
-            )
-          ),
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -191,7 +212,8 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
           )
         ],
       ),
-    ));
+    )
+    );
   }
 
   int countColunm() {
@@ -350,11 +372,23 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
+    if (responseChec.isEmpty) {
+      List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
+      if (savedResponses != null && savedResponses.isNotEmpty) {
+        setState(() {
+          selectedIndex = savedResponses[0];
+          print("Qestion response save : ${savedResponses[0]}");
+          responseChec.add(savedResponses[0]);
+        });
+      }
+      print("Qestion add response : $responseChec");
+    }
+    var id = responseChec[0];
     print("Qestion Map : ${responseChec}");
-    var id = responseChec[0]['id'];
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-
       responsePostProvider.addResponse(ResponsePost(
         id: 0,
         questionId: widget.qestion['id'],
@@ -365,51 +399,52 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
         dateResponse: DateTime.now().toIso8601String(),
       ));
       print(responsePostProvider.responses.length);
-    //  var id = responseChec[0]['id'];
-    //  var responseVariantId = responseChec[0]['questionId'];
-    //  Map<String, dynamic> requestBody = {
-    //    'oid': 0,
-    //    'questionnaireId': widget.qestion['questionnaireId'],
-    //    'responses': [
-    //      {
-    //        'id': 0,
-    //        'questionId': responseVariantId.toInt(),
-    //        'responseVariantId': id.toInt(),
-    //        // Уточните, какой ID нужно использовать
-    //        'alternativeResponse': '',
-    //        // Объединяем выбранные варианты в строку
-    //        'comentary': '',
-    //        // Пустая строка, замените на комментарий, если необходимо
-    //        'gradingType': widget.qestion['gradingType'].toInt(),
-    //        // Уточните, какой тип оценки нужно использовать
-    //        'dateResponse': DateTime.now().toIso8601String(),
-    //        // Текущая дата и время
-    //      }
-    //    ],
-    //    'licenseId': license
-    //  };
-    //  // Отправляем POST-запрос на сервер
-    //  final String basicAuth =
-    //      'Basic ' + base64Encode(utf8.encode('$username:$password'));
-    //  Uri url = Uri.parse(postResponse); // Замените на ваш URL
-    //  try {
-    //    final response =
-    //        await http.post(url, body: jsonEncode(requestBody), headers: {
-    //      'Authorization': basicAuth,
-    //      "Accept": "application/json",
-    //      "content-type": "application/json"
-    //    });
-    //    if (response.statusCode == 200) {
-    //      // Обработка успешного ответа от сервера
-    //      print('Response sent successfully.');
-    //    } else {
-    //      // Обработка ошибки
-    //      print('Failed to send response. Status code: ${response.statusCode}');
-    //    }
-    //  } catch (e) {
-    //    // Обработка ошибок сети
-    //    print('Error sending response: $e');
-    //  }
+      //  var id = responseChec[0]['id'];
+      //  var responseVariantId = responseChec[0]['questionId'];
+      //  Map<String, dynamic> requestBody = {
+      //    'oid': 0,
+      //    'questionnaireId': widget.qestion['questionnaireId'],
+      //    'responses': [
+      //      {
+      //        'id': 0,
+      //        'questionId': responseVariantId.toInt(),
+      //        'responseVariantId': id.toInt(),
+      //        // Уточните, какой ID нужно использовать
+      //        'alternativeResponse': '',
+      //        // Объединяем выбранные варианты в строку
+      //        'comentary': '',
+      //        // Пустая строка, замените на комментарий, если необходимо
+      //        'gradingType': widget.qestion['gradingType'].toInt(),
+      //        // Уточните, какой тип оценки нужно использовать
+      //        'dateResponse': DateTime.now().toIso8601String(),
+      //        // Текущая дата и время
+      //      }
+      //    ],
+      //    'licenseId': license
+      //  };
+      //  // Отправляем POST-запрос на сервер
+      //  final String basicAuth =
+      //      'Basic ' + base64Encode(utf8.encode('$username:$password'));
+      //  Uri url = Uri.parse(postResponse); // Замените на ваш URL
+      //  try {
+      //    final response =
+      //        await http.post(url, body: jsonEncode(requestBody), headers: {
+      //      'Authorization': basicAuth,
+      //      "Accept": "application/json",
+      //      "content-type": "application/json"
+      //    });
+      //    if (response.statusCode == 200) {
+      //      // Обработка успешного ответа от сервера
+      //      print('Response sent successfully.');
+      //    } else {
+      //      // Обработка ошибки
+      //      print('Failed to send response. Status code: ${response.statusCode}');
+      //    }
+      //  } catch (e) {
+      //    // Обработка ошибок сети
+      //    print('Error sending response: $e');
+      //  }
+
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -424,96 +459,105 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            alignment: Alignment.center,
-            title: Text(
-              returnDialogTitleFinish(widget.language),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontFamily: 'RobotoBlack',
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              returnDialogMessageFinish(widget.language),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontFamily: 'RobotoRegular',
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            actions: [
-              ElevatedButton(
-                style: ButtonStyle(
-                  alignment: Alignment.center,
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  fixedSize: MaterialStateProperty.all(const Size(624, 57)),
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.pressed)) {
-                        return Colors.green;
-                      }
-                      return questionsGroupColor;
-                    },
+          builder: (context) =>
+              AlertDialog(
+                alignment: Alignment.center,
+                title: Text(
+                  returnDialogTitleFinish(widget.language),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontFamily: 'RobotoBlack',
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                onPressed: () async {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (context) => const Questionnaires()),
-                          (route) => false);
-                  List<ResponsePost> allResponses = responsePostProvider.responses;
-                  print("PostRespons: ${allResponses.toString()}");
-                  Map<String, dynamic> staticData = {
-                    "oid": 0,
-                    "questionnaireId": 0,
-                    "responses": allResponses,
-                    "licenseId": license,
-
-                  };
-                  final String basicAuth =
-                      'Basic ${base64Encode(utf8.encode('$username:$password'))}';
-                  Uri url = Uri.parse(postResponse); // Замените на ваш URL
-                  try {
-                    final response =
-                        await http.post(url, body: jsonEncode(staticData), headers: {
-                      'Authorization': basicAuth,
-                      "Accept": "application/json",
-                      "content-type": "application/json"
-                    });
-                    if (response.statusCode == 200) {
-                      // Обработка успешного ответа от сервера
-                      print('Response sent successfully.');
-                      responsePostProvider.clearResponses();
-                    } else {
-                      // Обработка ошибки
-                      print('Failed to send response. Status code: ${response.statusCode}');
-                    }
-                  } catch (e) {
-                    // Обработка ошибок сети
-                    print('Error sending response: $e');
-                  }
-                },
-                child: const Text(
-                  'Ok',
-                  style: TextStyle(
-                    color: Colors.white,
+                content: Text(
+                  returnDialogMessageFinish(widget.language),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontFamily: 'RobotoRegular',
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+                actions: [
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      alignment: Alignment.center,
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      fixedSize: MaterialStateProperty.all(const Size(624, 57)),
+                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                          if (states.contains(MaterialState.pressed)) {
+                            return Colors.green;
+                          }
+                          return questionsGroupColor;
+                        },
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (context) => const Questionnaires()),
+                              (route) => false);
+                      List<ResponsePost> allResponses = responsePostProvider
+                          .responses;
+                      print("PostRespons: ${allResponses.toString()}");
+                      Map<String, dynamic> staticData = {
+                        "oid": 0,
+                        "questionnaireId": 0,
+                        "responses": allResponses,
+                        "licenseId": license,
+
+                      };
+                      final String basicAuth =
+                          'Basic ${base64Encode(
+                          utf8.encode('$username:$password'))}';
+                      Uri url = Uri.parse(postResponse); // Замените на ваш URL
+                      try {
+                        final response =
+                        await http.post(
+                            url, body: jsonEncode(staticData), headers: {
+                          'Authorization': basicAuth,
+                          "Accept": "application/json",
+                          "content-type": "application/json"
+                        });
+                        if (response.statusCode == 200) {
+                          // Обработка успешного ответа от сервера
+                          print('Response sent successfully.');
+                          responsePostProvider.clearResponses();
+                          multeAnsverVatinatResponse.clearResponseVariant();
+                          yesAndNo.clearResponseVariant();
+                        } else {
+                          // Обработка ошибки
+                          print(
+                              'Failed to send response. Status code: ${response
+                                  .statusCode}');
+                        }
+                      } catch (e) {
+                        // Обработка ошибок сети
+                        print('Error sending response: $e');
+                      }
+                    },
+                    child: const Text(
+                      'Ok',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontFamily: 'RobotoRegular',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
         );
       }
+
     }
   }
 

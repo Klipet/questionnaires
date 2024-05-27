@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  lottie: ^3.1.2
   auto_size_text: ^3.0.0
   permission_handler: ^10.3.0
   fluttertoast: ^8.0.7
@@ -80,6 +81,8 @@ flutter:
     - assets/localization/en.json
     - assets/localization/ro.json
     - assets/localization/ru.json
+    - assets/animations/start_animation.json
+    - assets/animations/list_empty_qestionar.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

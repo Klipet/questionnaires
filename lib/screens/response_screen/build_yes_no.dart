@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import '../../provider/post_privider.dart';
 import '../../factory/response_post.dart';
+import '../../save_response/multe_ansver_vatinat.dart';
 import '../../save_response/yes_no_variant.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
@@ -345,6 +346,8 @@ class _YesNoVariantState extends State<YesNoVariant> {
     var license = await shered.getString("licenseID");
     String valueToSend = '';
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
 
     if (isCheckedFirstButton == true) {
       valueToSend = 'true';
@@ -424,13 +427,14 @@ class _YesNoVariantState extends State<YesNoVariant> {
                       MaterialPageRoute(
                           builder: (context) => const Questionnaires()),
                           (route) => false);
+                  List<ResponsePost> allResponses = responsePostProvider.responses;
+                  print("PostRespons: ${allResponses.toString()}");
                   Map<String, dynamic> staticData = {
                     "oid": 0,
                     "questionnaireId": 0,
+                    "responses": allResponses,
                     "licenseId": license,
                   };
-                  // Добавьте поле "responses" к объекту статических данных
-                //  staticData['responses'] = responses.map((response) => response.toJson()).toList();
                   final String basicAuth =
                        'Basic ' + base64Encode(utf8.encode('$username:$password'));
                     Uri url = Uri.parse(postResponse); // Замените на ваш URL
@@ -444,9 +448,13 @@ class _YesNoVariantState extends State<YesNoVariant> {
                       if (response.statusCode == 200) {
                         // Обработка успешного ответа от сервера
                         print('Response sent successfully.');
+                        multeAnsverVatinatResponse.clearResponseVariant();
+                        yesAndNo.clearResponseVariant();
+                        responsePostProvider.clearResponses();
                       } else {
                         // Обработка ошибки
                         print('Failed to send response. Status code: ${response.statusCode}');
+
                       }
                     } catch (e) {
                       // Обработка ошибок сети

@@ -1,18 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:questionnaires/factory/get_questionnaires.dart';
-import 'package:questionnaires/factory/response_post.dart';
 import 'package:questionnaires/provider/locale_provider.dart';
 import 'package:questionnaires/screens/license.dart';
 import 'package:questionnaires/util/colors.dart';
 import 'package:questionnaires/util/images.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
-import 'package:transformable_list_view/transformable_list_view.dart';
 import '../util/const_url.dart';
+import 'nullQestionariesList.dart';
 import 'question_screen.dart';
 
 class Questionnaires extends StatefulWidget {
@@ -25,6 +23,7 @@ class Questionnaires extends StatefulWidget {
 class _Questionnaires extends State<Questionnaires> {
   late List<GetQuestionnaires> questionnaires;
   late Timer _timer;
+  int countChestionar = 0;
   bool hasError = false;
   String? errorMessage;
   bool isLoading = true;
@@ -84,12 +83,40 @@ class _Questionnaires extends State<Questionnaires> {
     String deviceName = await shered.getString("deviceID") ?? '';
     return deviceName;
   }
+  DropdownMenuItem<String> _buildDropdownMenuItem(String value, String text, String imagePath) {
+    return DropdownMenuItem(
+      alignment: Alignment.center,
+      value: value,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Image.asset(imagePath, fit: BoxFit.fill),
+              const SizedBox(width: 16),
+              Text(
+                text,
+                style: const TextStyle(
+                    color: textColor,
+                    fontSize: 18,
+                    fontFamily: 'RobotoRegular',
+                    fontWeight: FontWeight.w400),
+              ),
+            ],
+          ),
+          const Divider(color: birderDropDown),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LocaleProvider>(context);
     final currentLanguageCode = languageProvider.currentLanguageCode;
-
+    sortQuestionnairesByIndex(questionnaires, currentLanguageCode);
+  //  List<String> filteredQuestionnaires = getFilteredQuestionnairesWithFallback(currentLanguageCode);
+  //  int questionnairesCount = filteredQuestionnaires.length;
     return Scaffold(
         appBar: AppBar(actions: [
           DropdownButton(
@@ -102,8 +129,7 @@ class _Questionnaires extends State<Questionnaires> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Image.asset(_currentFluf(currentLanguageCode),
-                      fit: BoxFit.fill),
+                  Image.asset(_currentFluf(currentLanguageCode), fit: BoxFit.fill),
                   const SizedBox(width: 23),
                   Text(
                     returnDropdownButton(currentLanguageCode),
@@ -117,93 +143,27 @@ class _Questionnaires extends State<Questionnaires> {
               ),
             ),
             items: [
+              _buildDropdownMenuItem('RO', 'Română', 'assets/images/ro.png'),
+              _buildDropdownMenuItem('RU', 'Русский', 'assets/images/ru.png'),
+              _buildDropdownMenuItem('EN', 'English', 'assets/images/en.png'),
               DropdownMenuItem(
-                  alignment: Alignment.center,
-                  value: 'RO',
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/ro.png', fit: BoxFit.fill),
-                          const SizedBox(width: 16),
-                          const Text('Română',
-                              style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 14,
-                                  fontFamily: 'RobotoRegular',
-                                  fontWeight: FontWeight.w400)),
-                        ],
-                      ),
-                      const Divider(
-                        color: birderDropDown,
-                      )
-                    ],
-                  )),
-              DropdownMenuItem(
-                  alignment: Alignment.center,
-                  value: 'RU',
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/ru.png', fit: BoxFit.fill),
-                          const SizedBox(width: 16),
-                          const Text('Русский',
-                              style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 14,
-                                  fontFamily: 'RobotoRegular',
-                                  fontWeight: FontWeight.w400))
-                        ],
-                      ),
-                      const Divider(
-                        color: birderDropDown,
-                      )
-                    ],
-                  )),
-              DropdownMenuItem(
-                  alignment: Alignment.center,
-                  value: 'EN',
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/en.png', fit: BoxFit.fill),
-                          const SizedBox(width: 16),
-                          const Text('English',
-                              style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 14,
-                                  fontFamily: 'RobotoRegular',
-                                  fontWeight: FontWeight.w400)),
-                        ],
-                      ),
-                      const Divider(
-                        color: birderDropDown,
-                      )
-                    ],
-                  )),
-              DropdownMenuItem(
-                  alignment: Alignment.topLeft,
-                  value: 'RO',
-                  child: Text(
-                            deviceNameNow,
-                            style: const TextStyle(
-                                color: textDropDown,
-                                fontSize: 14,
-                                fontFamily: 'RobotoRegular',
-                                fontWeight: FontWeight.w400),
-                          ),
-                      ),
-
-
+                alignment: Alignment.topLeft,
+                value: 'RO',
+                child: Text(
+                  deviceNameNow,
+                  style: const TextStyle(
+                      color: textDropDown,
+                      fontSize: 14,
+                      fontFamily: 'RobotoRegular',
+                      fontWeight: FontWeight.w400),
+                ),
+              ),
             ],
             onChanged: (String? newLanguageCode) {
               if (newLanguageCode != null) {
-                languageProvider.changeLanguage(newLanguageCode);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  languageProvider.changeLanguage(newLanguageCode);
+                });
               }
             },
           ),
@@ -243,190 +203,111 @@ class _Questionnaires extends State<Questionnaires> {
                             )
                           ])
                     : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                            Text(
-                              returnTitle(currentLanguageCode),
-                              //AppLocalizations.of(context)!.appTitle,
-                             style: const TextStyle(
-                                fontSize: 48,
-                              fontFamily: 'RobotoBlack',
-                              fontWeight: FontWeight.w700,
-                            ),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      returnTitle(currentLanguageCode),
+                      //AppLocalizations.of(context)!.appTitle,
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontFamily: 'RobotoBlack',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Expanded(
+                      child:getFilteredQuestionnaires(currentLanguageCode).isEmpty || returnLanguage(currentLanguageCode).isEmpty
+                          ? NullQestionariesList(language: currentLanguageCode,)
+                          : LayoutBuilder(
+                          builder: (BuildContext context, BoxConstraints constraints) {
+                            return Scrollbar(
+                              thickness: 5,
+                              radius: Radius.circular(2),
+                              interactive: true,
+                              trackVisibility: true,
+                              thumbVisibility: true,
+                              controller: _scrollController,
+                              child: LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
+                                final screenHeight = constraints.maxHeight;
+                                const itemHeight = 100.0;
+                                final filteredQuestionnaires = getFilteredQuestionnaires(currentLanguageCode);
+                                final itemCount = (screenHeight / itemHeight).floor().clamp(0, filteredQuestionnaires.length);
+                                return Padding(padding: EdgeInsets.only(top: 48),
+                                    child:  ListView.builder(
+                                      itemExtent: 86,
+                                      controller: _scrollController,
+                                      shrinkWrap: true, // Добавляем shrinkWrap: true
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      itemCount: returnLanguage(currentLanguageCode).length,
+                                      itemBuilder: (context, index) {
+                                        int originalIndex = questionnaires.indexWhere((questions) {
+                                          String nameJson = questions.name;
+                                          if (nameJson != null) {
+                                            Map<String, dynamic> nameMap = jsonDecode(nameJson);
+                                            return nameMap[currentLanguageCode] == returnLanguage(currentLanguageCode).length;
+                                          }
+                                          return false;
+                                        });
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 32, right: 32, bottom: 16),
+                                          child: InkWell(
+                                            onTap: () {
+                                              Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          QuestionScreen(
+                                                              oid: questionnaires[index].oid,
+                                                              language: currentLanguageCode)));
+                                              },
+                                            child: Container(
+                                                transformAlignment:
+                                                Alignment.centerLeft,
+                                                alignment: Alignment.centerLeft,
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                    BorderRadius.circular(6.0),
+                                                    color: const Color.fromRGBO(55, 170, 15, 1),
+                                                    border: Border.all(color: Colors.white)),
+                                                height: 70,
+                                                padding: const EdgeInsets.all(10),
+                                                child: Text(
+                                                  returnLanguage(currentLanguageCode)[index],
+                                                  textAlign: TextAlign.left,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 32,
+                                                    fontFamily: 'RobotoRegular',
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                )),
+                                          ),
+                                        );
+                                        },));
+                              }),
+                            );
+                          }
                           ),
-                        //    Expanded(
-                        //      child: Padding(
-                        //          padding: const EdgeInsets.only(top: 48),
-                        //          child: TransformableListView.builder(
-                        //            getTransformMatrix: getTransformMatrix,
-                        //            itemBuilder: (context, index) {
-                        //              return Scrollbar(
-                        //                  thickness: 5,
-                        //                  child: InkWell(
-                        //                  onTap: () {
-                        //                    Navigator.of(context).push(
-                        //                        MaterialPageRoute(
-                        //                            builder: (context) =>
-                        //                                QuestionScreen(
-                        //                                    oid: questionnaires[
-                        //                                            index]
-                        //                                        .oid,
-                        //                                    language:
-                        //                                        currentLanguageCode)));
-                        //                  },
-                        //                  child: Container(
-                        //                      height: 80,
-                        //                      margin:
-                        //                          const EdgeInsets.symmetric(
-                        //                        horizontal: 32,
-                        //                        vertical: 8,
-                        //                      ),
-                        //                      decoration: BoxDecoration(
-                        //                        color: index.isEven
-                        //                            ? questionsGroupColor
-                        //                            : questionsGroupColor,
-                        //                        borderRadius:
-                        //                            BorderRadius.circular(6),
-                        //                      ),
-                        //                      alignment: Alignment.centerLeft,
-                        //                      child: Padding(
-                        //                        padding: EdgeInsets.only(left: 16),
-                        //                        child: Text(
-                        //                          returnLanguage(
-                        //                              currentLanguageCode)[index],
-                        //                          textAlign: TextAlign.left,
-                        //                          style: const TextStyle(
-                        //                            color: Colors.white,
-                        //                            fontSize: 32,
-                        //                            fontFamily: 'RobotoRegular',
-                        //                            fontWeight: FontWeight.w400,
-                        //                          ),
-                        //                        ),
-                        //                      ), )
-                        //              ));
-                        //            },
-                        //            itemCount: getFilteredQuestionnaires(
-                        //                    currentLanguageCode)
-                        //                .length,
-                        //          )
-                        //      )
-                        //    )
-
-                             Expanded(child:   LayoutBuilder(builder:
-                                     (BuildContext context,
-                                         BoxConstraints constraints) {
-                                   double availableHeight = constraints.maxHeight;
-                                   double elementHeight = 8 * (70.0 + 16.0);
-                                   int numberOfElements = (availableHeight /
-                                           getFilteredQuestionnaires(
-                                                   currentLanguageCode)
-                                               .length)
-                                       .floor();
-                                   return
-                                 Scrollbar(
-                                   thickness: 5,
-                                     radius: Radius.circular(2),
-                                     interactive: true,
-                                     trackVisibility: true,
-                                     thumbVisibility: true,
-                                   controller: _scrollController,
-                                   child: LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
-                                     final screenHeight = constraints.maxHeight;
-                                     const itemHeight = 100.0;
-                                     final filteredQuestionnaires = getFilteredQuestionnaires(currentLanguageCode);
-                                     final itemCount = (screenHeight / itemHeight).floor().clamp(0, filteredQuestionnaires.length);
-                                     return Padding(padding: EdgeInsets.only(top: 48),
-                                     child:
-                                     ListView.builder(
-                                       itemExtent: 86,
-                                       controller: _scrollController,
-                                       shrinkWrap: true, // Добавляем shrinkWrap: true
-                                       physics: const AlwaysScrollableScrollPhysics(),
-                                       itemCount: getFilteredQuestionnaires(currentLanguageCode).length,
-                                       //getFilteredQuestionnaires(currentLanguageCode).length,
-
-                                       //getFilteredQuestionnaires(currentLanguageCode).length,
-                                       // numberOfElements
-                                       // ? numberOfElements
-                                       // : currentLanguageCode.length,
-                                       itemBuilder: (context, index) {
-                                         final realIndex = index % filteredQuestionnaires.length;
-                                         getFilteredQuestionnaires(
-                                             currentLanguageCode)
-                                             .sort((a, b) => a.compareTo(b));
-                                         return Padding(
-                                           padding: const EdgeInsets.only(
-                                               left: 32, right: 32, bottom: 16),
-                                           child: InkWell(
-                                             onTap: () {
-                                               Navigator.of(context).push(
-                                                   MaterialPageRoute(
-                                                       builder: (context) =>
-                                                           QuestionScreen(
-                                                               oid: questionnaires[
-                                                               realIndex]
-                                                                   .oid,
-                                                               language:
-                                                               currentLanguageCode)));
-                                             },
-                                             child: Container(
-                                                 transformAlignment:
-                                                 Alignment.centerLeft,
-                                                 alignment: Alignment.centerLeft,
-                                                 decoration: BoxDecoration(
-                                                     borderRadius:
-                                                     BorderRadius.circular(6.0),
-                                                     color: const Color.fromRGBO(
-                                                         55, 170, 15, 1),
-                                                     border: Border.all(
-                                                         color: Colors.white)),
-                                                 height: 70,
-                                                 padding: const EdgeInsets.all(10),
-                                                 child: Text(
-                                                   returnLanguage(
-                                                       currentLanguageCode)[index],
-                                                   textAlign: TextAlign.left,
-                                                   style: const TextStyle(
-                                                     color: Colors.white,
-                                                     fontSize: 32,
-                                                     fontFamily: 'RobotoRegular',
-                                                     fontWeight: FontWeight.w400,
-                                                   ),
-                                                 )),
-                                           ),
-                                         );
-                                       },));
-                                   }),
-
-                               );
-                                }
-                                 ),
-              )])));
+                    )
+                  ],)
+        )
+    );
   }
 
-  Matrix4 getTransformMatrix(TransformableListItem item) {
-    /// final scale of child when the animation is completed
-    const endScaleBound = 0.3;
+//  List<String> getFilteredQuestionnairesWithFallback(String currentLanguageCode) {
+//    var filteredQuestionnaires = getFilteredQuestionnaires(currentLanguageCode);
+//    if (filteredQuestionnaires.isEmpty) {
+//      // Если данных нет для текущего языка, переключаемся на 'RU'
+//      currentLanguageCode = 'RU';
+//      filteredQuestionnaires = getFilteredQuestionnaires(currentLanguageCode);
+//      if (filteredQuestionnaires.isEmpty) {
+//        // Если данных нет для 'RU', переключаемся на 'EN'
+//        currentLanguageCode = 'EN';
+//        filteredQuestionnaires = getFilteredQuestionnaires(currentLanguageCode);
+//      }
+//    }
+//    return filteredQuestionnaires;
+//  }
 
-    /// 0 when animation completed and [scale] == [endScaleBound]
-    /// 1 when animation starts and [scale] == 1
-    final animationProgress = item.visibleExtent / item.size.height;
-
-    /// result matrix
-    final paintTransform = Matrix4.identity();
-
-    /// animate only if item is on edge
-    if (item.position != TransformableListItemPosition.middle) {
-      final scale = endScaleBound + ((1 - endScaleBound) * animationProgress);
-
-      paintTransform
-        ..translate(item.size.width / 2)
-        ..scale(scale)
-        ..translate(-item.size.width / 2);
-    }
-
-    return paintTransform;
-  }
 
   void _scrollListener() {
     final double topEdge = _scrollController.offset;
@@ -486,60 +367,53 @@ class _Questionnaires extends State<Questionnaires> {
       });
     }
   }
-
-  List<String> getFilteredQuestionnaires(String localeCode) {
-    List<String> qestion = [];
-    for (GetQuestionnaires questions in questionnaires) {
-      String nameJson = questions.name;
-      if (nameJson != null) {
-        Map<String, dynamic> nameMap = jsonDecode(nameJson);
-        if (nameMap.containsKey(localeCode) && nameMap[localeCode] != null) {
-          qestion.add(nameMap[localeCode]);
-        }
+  void sortQuestionnairesByIndex(List<GetQuestionnaires> questionnaires, String localeCode) {
+    questionnaires.sort((a, b) {
+      String nameJsonA = a.name;
+      String nameJsonB = b.name;
+      if (nameJsonA != null && nameJsonB != null) {
+        Map<String, dynamic> nameMapA = jsonDecode(nameJsonA);
+        Map<String, dynamic> nameMapB = jsonDecode(nameJsonB);
+        String nameA = nameMapA[localeCode] ?? '';
+        String nameB = nameMapB[localeCode] ?? '';
+        return nameA.compareTo(nameB);
       }
-    }
-    return qestion;
+      return 0;
+    });
+  }
 
-    //  // Фильтруйте `questionnaires` так, чтобы включить только те опросники, у которых есть название на выбранном языке
-    //  return questionnaires.where((questionnaire) {
-    //    // Разбираем JSON и проверяем наличие названия на выбранном языке
-    //    Map<String, dynamic> nameMap = jsonDecode(questionnaire.name);
-    //    if (nameMap.containsKey(localeCode)){
-    //      var name = nameMap[localeCode];
-    //      qestion.add(nameMap[localeCode]);
-    //    }
-    //    // Возвращаем true, если есть название на выбранном языке и оно не равно null
-    //    return nameMap.containsKey(localeCode) && nameMap[localeCode] != null;
-    //  }).toList();
+
+  List<GetQuestionnaires> getFilteredQuestionnaires(String localeCode) {
+    // Фильтруйте `questionnaires` так, чтобы включить только те опросники, у которых есть название на выбранном языке
+    return questionnaires.where((questionnaire) {
+      // Разбираем JSON и проверяем наличие названия на выбранном языке
+      Map<String, dynamic> nameMap = jsonDecode(questionnaire.name);
+      // Возвращаем true, если есть название на выбранном языке и оно не равно null
+      return nameMap.containsKey(localeCode) && nameMap[localeCode] != null;
+    }).toList();
   }
 
   List<String> returnLanguage(String localeCod) {
     List<String> languageNames = [];
     for (GetQuestionnaires questions in questionnaires) {
       String nameJson = questions.name;
-
-      // Проверяем, есть ли поле "name" в JSON-мапе
-      if (nameJson != null && nameJson.isNotEmpty) {
-        Map<String, dynamic> nameMap = jsonDecode(nameJson);
-
-        // Проверяем, существует ли ключ localeCod в nameMap
-        if (nameMap.containsKey(localeCod)) {
-          String languageName = nameMap[localeCod];
-          if (languageName.isEmpty) {
-            languageNames.removeLast();
-          } else {
-            languageNames.add(languageName);
-          }
+      Map<String, dynamic>? nameMap = jsonDecode(nameJson); // Обратите внимание на "?"
+      if (nameMap != null && (nameMap.containsKey(localeCod) || nameMap[localeCod] != null)) {
+        String? languageName = nameMap[localeCod]; // Обратите внимание на "?"
+        if (languageName != null) { // Проверяем, что languageName не равен null
+          languageNames.add(languageName);
         }
       }
     }
     return languageNames;
   }
 
+
+
   String returnTitle(String localeCod) {
     String enName = 'Questionnaires';
     String roName = 'Chestionare';
-    String ruName = 'Опросник';
+    String ruName = 'Опросники';
     if (localeCod == 'RO') {
       return roName;
     } else if (localeCod == 'RU') {

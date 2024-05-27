@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:questionnaires/provider/post_privider.dart';
 import 'package:questionnaires/factory/questions.dart';
+import 'package:questionnaires/save_response/yes_no_variant.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../factory/response_post.dart';
+import '../../save_response/multe_ansver_vatinat.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
 import '../questionnaires.dart';
@@ -49,6 +51,9 @@ class _PointFiveScoreState extends State<PointFiveScore> {
   void initState() {
     isCheckedList = List.generate(5, (index) => false);
     responseChec = [];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedResponses();
+    });
     super.initState();
   }
   final List<String> images = [
@@ -65,6 +70,23 @@ class _PointFiveScoreState extends State<PointFiveScore> {
    'assets/images/selected_smile_simpl.png',
    'assets/images/selected_smile_love.png',
  ];
+
+  void _loadSavedResponses() {
+    final variant = Provider.of<YesNoVariantResponse>(context, listen: false);
+    List<String>? savedResponses = variant.getResponse(widget.index);
+    if (savedResponses != null && savedResponses.isNotEmpty) {
+      setState(() {
+        selectedIndex = int.parse(savedResponses[0]);
+        isCheckedList[selectedIndex] = true;
+      });
+    }
+  }
+
+  void _saveSelectedResponse(int index) {
+    final multeAnsverVatinatResponse =
+    Provider.of<YesNoVariantResponse>(context, listen: false);
+    multeAnsverVatinatResponse.addResponse(widget.index, [index.toString()]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,17 +199,22 @@ class _PointFiveScoreState extends State<PointFiveScore> {
        // Действие при нажатии на кнопку
        setState(() {
          selectedIndex = i;
+         for (int i = 0; i < isCheckedList.length; i++) {
+           isCheckedList[i] = i == selectedIndex;
+         }
+         selectedIndex = i;
        });
-     },
+       _saveSelectedResponse(i);
+       },
      child: Container(
        width: 157, // Ширина изображения
        height: 157, // Высота изображения
        child: Image.asset(
-         i != selectedIndex ? images[i]:  selectedImages[i],
+         i != selectedIndex? images[i]:  selectedImages[i],
          fit: BoxFit.fill,
        ),
-     ),
-   );
+  ),
+     );
    }
 
   String returnButtonNext(String localeCod) {
@@ -350,6 +377,8 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
     print(selectedIndex! +1 );
     List<ResponsePost> responses = [];
     String response = (selectedIndex! + 1).toString();
@@ -367,50 +396,6 @@ class _PointFiveScoreState extends State<PointFiveScore> {
       );
       print(responsePostProvider.responses.length);
 
-  //
-  //    Map<String, dynamic> requestBody = {
-  //      'oid': 0,
-  //      'questionnaireId': widget.qestion['questionnaireId'],
-  //      'responses': [
-  //        {
-  //          'id': 0,
-  //          'questionId': widget.qestion['id'],
-  //          'responseVariantId': 0,
-  //          // Уточните, какой ID нужно использовать
-  //          'alternativeResponse': response,
-  //          // Объединяем выбранные варианты в строку
-  //          'comentary': '',
-  //          // Пустая строка, замените на комментарий, если необходимо
-  //          'gradingType': widget.qestion['gradingType'].toInt(),
-  //          // Уточните, какой тип оценки нужно использовать
-  //          'dateResponse': DateTime.now().toIso8601String(),
-  //          // Текущая дата и время
-  //        }
-  //      ],
-  //      'licenseId': license
-  //    };
-  //    // Отправляем POST-запрос на сервер
-  //    final String basicAuth =
-  //        'Basic ' + base64Encode(utf8.encode('$username:$password'));
-  //    Uri url = Uri.parse(postResponse); // Замените на ваш URL
-  //    try {
-  //      final response =
-  //          await http.post(url, body: jsonEncode(requestBody), headers: {
-  //        'Authorization': basicAuth,
-  //        "Accept": "application/json",
-  //        "content-type": "application/json"
-  //      });
-  //      if (response.statusCode == 200) {
-  //        // Обработка успешного ответа от сервера
-  //        print('Response sent successfully.');
-  //      } else {
-  //        // Обработка ошибки
-  //        print('Failed to send response. Status code: ${response.statusCode}');
-  //      }
-  //    } catch (e) {
-  //      // Обработка ошибок сети
-  //      print('Error sending response: $e');
-  //    }
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -493,6 +478,8 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                       // Обработка успешного ответа от сервера
                       print('Response sent successfully.');
                       responsePostProvider.clearResponses();
+                      multeAnsverVatinatResponse.clearResponseVariant();
+                      yesAndNo.clearResponseVariant();
                     } else {
                       // Обработка ошибки
                       print('Failed to send response. Status code: ${response.statusCode}');
