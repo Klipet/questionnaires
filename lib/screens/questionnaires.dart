@@ -237,27 +237,32 @@ class _Questionnaires extends State<Questionnaires> {
                                       controller: _scrollController,
                                       shrinkWrap: true, // Добавляем shrinkWrap: true
                                       physics: const AlwaysScrollableScrollPhysics(),
-                                      itemCount: returnLanguage(currentLanguageCode).length,
+                                      itemCount: getFilteredQuestionnaires(currentLanguageCode).length,
                                       itemBuilder: (context, index) {
-                                        int originalIndex = questionnaires.indexWhere((questions) {
-                                          String nameJson = questions.name;
-                                          if (nameJson != null) {
-                                            Map<String, dynamic> nameMap = jsonDecode(nameJson);
-                                            return nameMap[currentLanguageCode] == returnLanguage(currentLanguageCode).length;
-                                          }
-                                          return false;
-                                        });
+                                    //    int originalIndex = questionnaires.indexWhere((questions) {
+                                    //      String? nameJson = questions.name;
+                                    //      if (nameJson != null) {
+                                    //        Map<String, dynamic> nameMap = jsonDecode(nameJson);
+                                    //        // Проверяем, что у нас есть ключ на текущем языке и сравниваем с длиной возвращенного списка языков
+                                    //        return nameMap.containsKey(currentLanguageCode) && nameMap[currentLanguageCode] == returnLanguage(currentLanguageCode).length;
+                                    //      }
+                                    //      return false;
+                                    //    });
+                                    //    final originalIndex = index % filteredQuestionnaires.length;
                                         return Padding(
                                           padding: const EdgeInsets.only(
                                               left: 32, right: 32, bottom: 16),
                                           child: InkWell(
                                             onTap: () {
+                                              print("Oid: ${getFilteredQuestionnaires(currentLanguageCode)[index].oid}");
                                               Navigator.of(context).push(
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           QuestionScreen(
-                                                              oid: questionnaires[index].oid,
-                                                              language: currentLanguageCode)));
+                                                              oid: getFilteredQuestionnaires(currentLanguageCode)[index].oid,
+                                                              language: currentLanguageCode)
+                                                  )
+                                              );
                                               },
                                             child: Container(
                                                 transformAlignment:
@@ -384,24 +389,27 @@ class _Questionnaires extends State<Questionnaires> {
 
 
   List<GetQuestionnaires> getFilteredQuestionnaires(String localeCode) {
-    // Фильтруйте `questionnaires` так, чтобы включить только те опросники, у которых есть название на выбранном языке
     return questionnaires.where((questionnaire) {
-      // Разбираем JSON и проверяем наличие названия на выбранном языке
-      Map<String, dynamic> nameMap = jsonDecode(questionnaire.name);
-      // Возвращаем true, если есть название на выбранном языке и оно не равно null
-      return nameMap.containsKey(localeCode) && nameMap[localeCode] != null;
+      String? nameJson = questionnaire.name;
+      if (nameJson != null) {
+        Map<String, dynamic> nameMap = jsonDecode(nameJson);
+        return nameMap.containsKey(localeCode) && nameMap[localeCode] != null;
+      }
+      return false;
     }).toList();
   }
 
-  List<String> returnLanguage(String localeCod) {
+  List<String> returnLanguage(String localeCode) {
     List<String> languageNames = [];
     for (GetQuestionnaires questions in questionnaires) {
-      String nameJson = questions.name;
-      Map<String, dynamic>? nameMap = jsonDecode(nameJson); // Обратите внимание на "?"
-      if (nameMap != null && (nameMap.containsKey(localeCod) || nameMap[localeCod] != null)) {
-        String? languageName = nameMap[localeCod]; // Обратите внимание на "?"
-        if (languageName != null) { // Проверяем, что languageName не равен null
-          languageNames.add(languageName);
+      String? nameJson = questions.name;
+      if (nameJson != null) {
+        Map<String, dynamic>? nameMap = jsonDecode(nameJson);
+        if (nameMap != null && nameMap.containsKey(localeCode) && nameMap[localeCode] != null) {
+          String? languageName = nameMap[localeCode];
+          if (languageName != null) {
+            languageNames.add(languageName);
+          }
         }
       }
     }

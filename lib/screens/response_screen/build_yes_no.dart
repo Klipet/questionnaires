@@ -454,7 +454,9 @@ class _YesNoVariantState extends State<YesNoVariant> {
                       } else {
                         // Обработка ошибки
                         print('Failed to send response. Status code: ${response.statusCode}');
-
+                        multeAnsverVatinatResponse.clearResponseVariant();
+                        yesAndNo.clearResponseVariant();
+                        responsePostProvider.clearResponses();
                       }
                     } catch (e) {
                       // Обработка ошибок сети
