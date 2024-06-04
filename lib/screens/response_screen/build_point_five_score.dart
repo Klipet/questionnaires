@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:questionnaires/provider/post_privider.dart';
 import 'package:questionnaires/factory/questions.dart';
+import 'package:questionnaires/save_response/single_variant_response.dart';
 import 'package:questionnaires/save_response/yes_no_variant.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -256,7 +257,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
 
   void _onNextPressed() {
     // Проверяем, есть ли хотя бы один выбранный вариант ответа
-    if (selectedIndex != null) {
+    if (selectedIndex != -1) {
       // Если есть, выполняем отправку POST-запроса на сервер
       _sendResponseToServer();
     } else {
@@ -378,13 +379,13 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     var license = await shered.getString("licenseID");
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
     final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
     print(selectedIndex! +1 );
-    List<ResponsePost> responses = [];
     String response = (selectedIndex! + 1).toString();
-// Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      responsePostProvider.addResponse(ResponsePost(
+      responsePostProvider.addResponse(
+          ResponsePost(
         id: 0,
         questionId: widget.qestion['id'],
         responseVariantId: 0,
@@ -394,7 +395,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
         dateResponse: DateTime.now().toIso8601String(),
       )
       );
-      print(responsePostProvider.responses.length);
+      print(responsePostProvider.responses.toString());
 
     } catch (e) {
       print('Error sending response: $e');
@@ -480,6 +481,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
                       responsePostProvider.clearResponses();
                       multeAnsverVatinatResponse.clearResponseVariant();
                       yesAndNo.clearResponseVariant();
+                      singleVatinatResponse.clearResponseVariant();
                     } else {
                       // Обработка ошибки
                       print('Failed to send response. Status code: ${response.statusCode}');

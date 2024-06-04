@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:questionnaires/save_response/single_variant_response.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../provider/post_privider.dart';
@@ -369,10 +370,12 @@ class _PointThenScoreState extends State<PointThenScore> {
     String response = (selectedIndex! + 1).toString();
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
     final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
 // Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      responsePostProvider.addResponse(ResponsePost(
+      responsePostProvider.addResponse(
+          ResponsePost(
         id: 0,
         questionId: widget.qestion['id'],
         responseVariantId: 0,
@@ -383,50 +386,6 @@ class _PointThenScoreState extends State<PointThenScore> {
       ));
 
       print(responsePostProvider.responses.length);
-    //
-    //  Map<String, dynamic> requestBody = {
-    //    'oid': 0,
-    //    'questionnaireId': widget.qestion['questionnaireId'],
-    //    'responses': [
-    //      {
-    //        'id': 0,
-    //        'questionId': widget.qestion['id'],
-    //        'responseVariantId': 0,
-    //        // Уточните, какой ID нужно использовать
-    //        'alternativeResponse': response,
-    //        // Объединяем выбранные варианты в строку
-    //        'comentary': '',
-    //        // Пустая строка, замените на комментарий, если необходимо
-    //        'gradingType': widget.qestion['gradingType'].toInt(),
-    //        // Уточните, какой тип оценки нужно использовать
-    //        'dateResponse': DateTime.now().toIso8601String(),
-    //        // Текущая дата и время
-    //      }
-    //    ],
-    //    'licenseId': license
-    //  };
-    //  // Отправляем POST-запрос на сервер
-    //  final String basicAuth =
-    //      'Basic ' + base64Encode(utf8.encode('$username:$password'));
-    //  Uri url = Uri.parse(postResponse); // Замените на ваш URL
-    //  try {
-    //    final response =
-    //        await http.post(url, body: jsonEncode(requestBody), headers: {
-    //      'Authorization': basicAuth,
-    //      "Accept": "application/json",
-    //      "content-type": "application/json"
-    //    });
-    //    if (response.statusCode == 200) {
-    //      // Обработка успешного ответа от сервера
-    //      print('Response sent successfully.');
-    //    } else {
-    //      // Обработка ошибки
-    //      print('Failed to send response. Status code: ${response.statusCode}');
-    //    }
-    //  } catch (e) {
-    //    // Обработка ошибок сети
-    //    print('Error sending response: $e');
-    //  }
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -510,6 +469,7 @@ class _PointThenScoreState extends State<PointThenScore> {
                       responsePostProvider.clearResponses();
                       multeAnsverVatinatResponse.clearResponseVariant();
                       yesAndNo.clearResponseVariant();
+                      singleVatinatResponse.clearResponseVariant();
                     } else {
                       // Обработка ошибки
                       print('Failed to send response. Status code: ${response.statusCode}');

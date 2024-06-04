@@ -13,9 +13,10 @@ class ResponsePostProvider extends ChangeNotifier {
 
   void clearResponses() {
     _responses.clear();
-    notifyListeners();
   }
-  void clearFirstResponse(){
-    _responses.removeLast();
+  // Очищаем ответы для конкретного вопроса
+  void clearResponsesForQuestion(int questionId) {
+    _responses.removeWhere((response) => response.questionId == questionId);
+    notifyListeners();
   }
 }

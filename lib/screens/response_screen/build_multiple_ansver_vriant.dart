@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:questionnaires/provider/post_privider.dart';
 import 'package:questionnaires/save_response/multe_ansver_vatinat.dart';
+import 'package:questionnaires/save_response/single_variant_response.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
 import '../../factory/response_post.dart';
@@ -66,13 +67,14 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
   }
 
   void _saveResponses() {
+    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
     List<int> selectedIndices = [];
     for (int i = 0; i < isCheckedList.length; i++) {
       if (isCheckedList[i]) {
         selectedIndices.add(i);
+        print("_saveResponses: ${i.toString()}");
       }
     }
-    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
     multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
   }
 
@@ -416,25 +418,24 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
     var license = await shered.getString("licenseID");
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
     final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
-    print("Qestion Map : ${widget.qestion}");
     try {
       for (int i = 0; i < responseChec.length; i++) {
         var id = responseChec[i]['id'];
         var responseVariantId = responseChec[i]['questionId'];
         responsePostProvider.addResponse(
-        ResponsePost(
-          id: 0,
-          questionId: responseVariantId.toInt(),
-          responseVariantId: id.toInt(),
-          alternativeResponse: '',
-          commentary: '',
-          gradingType: widget.qestion['gradingType'].toInt(),
-          dateResponse: DateTime.now().toIso8601String(),
-        ));
-        print(responsePostProvider.responses.length);
+            ResponsePost(
+              id: 0,
+              questionId: responseVariantId.toInt(),
+              responseVariantId: id.toInt(),
+              alternativeResponse: '',
+              commentary: '',
+              gradingType: widget.qestion['gradingType'].toInt(),
+              dateResponse: DateTime.now().toIso8601String(),
+            )
+        );
       }
-
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -489,12 +490,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                   ),
                 ),
                 onPressed: () async {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (context) => const Questionnaires()),
-                          (route) => false);
                   List<ResponsePost> allResponses = responsePostProvider.responses;
-                  print("PostRespons: ${allResponses.toString()}");
                   Map<String, dynamic> staticData = {
                     "oid": 0,
                     "questionnaireId": 0,
@@ -512,11 +508,16 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
                       "content-type": "application/json"
                     });
                     if (response.statusCode == 200) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (context) => const Questionnaires()),
+                              (route) => false);
                       // Обработка успешного ответа от сервера
                       print('Response sent successfully.');
                       responsePostProvider.clearResponses();
                       multeAnsverVatinatResponse.clearResponseVariant();
                       yesAndNo.clearResponseVariant();
+                      singleVatinatResponse.clearResponseVariant();
                     } else {
                       // Обработка ошибки
                       print('Failed to send response. Status code: ${response.statusCode}');
