@@ -7,8 +7,8 @@ import 'package:questionnaires/screens/response_screen/build_point_then_score.da
 import 'package:questionnaires/screens/response_screen/build_yes_no.dart';
 import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import 'package:http/http.dart' as http;
+import '../factory/get_questionnaires.dart';
 import '../factory/questions.dart';
-import '../factory/response_post.dart';
 import '../provider/post_privider.dart';
 import '../save_response/multe_ansver_vatinat.dart';
 import '../save_response/yes_no_variant.dart';
@@ -33,12 +33,14 @@ class QuestionScreen extends StatefulWidget {
 
 class _QuestionScreenState extends State<QuestionScreen> {
   late List<Questionaires> questions;
+  late List<GetQuestionnaires> questionsListTotal;
   late List<dynamic> questionsList;
   late PageController _pageViewController;
   bool isLoading = true;
   late bool hasError;
   Map<String, dynamic> qestionMap = {};
   late int _currentPageIndex = 0;
+
 
   @override
   void initState() {
@@ -82,6 +84,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
                           // Обновите текущий индекс страницы при ее изменении
                           setState(() {
                             _currentPageIndex = index;
+                            if (index == 0){
+                              responsePostProvider.clearResponses();
+                              print('$index Удален опросник');
+                            }
                           });
                         },
                         itemBuilder: (context, index) {
@@ -95,8 +101,11 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                   iconSize: 24,
                                   color: Colors.white,
                                   onPressed: () {
-                                    responsePostProvider.clearFirstResponse();
-                                    print(responsePostProvider.responses.length);
+                                    if(index > 0){
+                                      responsePostProvider.clearResponsesForQuestion(questionsList[index]['id']);
+                                      print('${questionsList[index]['id']} index удален');
+
+                                    }
                                     goToPreviousPage(); // Вызываем метод для перехода на предыдущую страницу
                                   },
                                 ),
@@ -305,6 +314,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         questionsList = responseDate['questionnaire']['questions'];
         questions = parseQuestionaires(responseDate);
         List<dynamic> allQuestions = responseDate['questionnaire']['questions'];
+        questionsListTotal = allQuestions.map((json) => GetQuestionnaires.fromJson(json)).toList();
         if(allQuestions.isEmpty){
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => ErrorScreen(language: widget.language)),
@@ -487,6 +497,7 @@ List<Questions> parseQuestTitle(Map<String, dynamic> responseData) {
   // Преобразуем каждый вопрос в объект Question
   return questionsJson.map((json) => Questions.fromJson(json)).toList();
 }
+
 
 List<Questionaires> parseQuestionaires(Map<String, dynamic> responseData) {
   // Извлекаем список вопросов из карты

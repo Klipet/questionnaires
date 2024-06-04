@@ -9,12 +9,12 @@ import 'package:provider/provider.dart';
 import 'package:questionnaires/l10n/supported_localization.dart';
 import 'package:questionnaires/provider/locale_provider.dart';
 import 'package:questionnaires/save_response/multe_ansver_vatinat.dart';
+import 'package:questionnaires/save_response/single_variant_response.dart';
 import 'package:questionnaires/save_response/yes_no_variant.dart';
 import 'package:questionnaires/screens/license.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
 import 'package:questionnaires/screens/splash_page.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-
 import 'provider/post_privider.dart';
 
 
@@ -23,8 +23,14 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  runApp(ChangeNotifierProvider(
-    create: (context) => LocaleProvider(),
+  runApp(MultiProvider(
+  //  create: (context) => LocaleProvider(),
+    providers: [
+      ChangeNotifierProvider(create: (context) => SingleVariantResponse()),
+      ChangeNotifierProvider(create: (context) => MulteAnsverVatinatResponse()),
+      ChangeNotifierProvider(create: (context) => YesNoVariantResponse()),
+      ChangeNotifierProvider(create: (context) => LocaleProvider()),
+    ],
     child: const MyApp(),
   ));
 }

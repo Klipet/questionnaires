@@ -361,6 +361,8 @@ class _Questionnaires extends State<Questionnaires> {
           await Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const License()),
               (route) => false);
+        } else if (response.statusCode == 502){
+          Navigator.pop(context);
         }
       } else {
         Navigator.of(context).pushAndRemoveUntil(
@@ -467,3 +469,4 @@ List<GetQuestionnaires> parseQuestionnaires(Map<String, dynamic> responseData) {
       .map((json) => GetQuestionnaires.fromJson(json))
       .toList();
 }
+

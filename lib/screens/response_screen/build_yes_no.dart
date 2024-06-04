@@ -7,6 +7,7 @@ import 'package:secure_shared_preferences/secure_shared_pref.dart';
 import '../../provider/post_privider.dart';
 import '../../factory/response_post.dart';
 import '../../save_response/multe_ansver_vatinat.dart';
+import '../../save_response/single_variant_response.dart';
 import '../../save_response/yes_no_variant.dart';
 import '../../util/colors.dart';
 import '../../util/const_url.dart';
@@ -154,6 +155,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
                             false; // сбрасываем состояние первой кнопки при нажатии на вторую
                       }
                       responseChec.add(widget.qestion['responseVariants']);
+                      print(responseChec.length.toString());
                       _saveResponses();
                     });
                   },
@@ -344,31 +346,39 @@ class _YesNoVariantState extends State<YesNoVariant> {
   void _sendResponseToServer() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
+    List<String> responses = [];
     String valueToSend = '';
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
     final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
 
     if (isCheckedFirstButton == true) {
       valueToSend = 'true';
+      responses.clear();
+      responses.add(valueToSend);
     } else if (isCheckedSecondButton == true) {
       valueToSend = 'false';
-    } else {
-      // Оба значения равны false, определите, что делать в этом случае.
+      responses.clear();
+      responses.add(valueToSend);
     }
-// Получаем выбранные варианты ответов на основе isCheckedList
+
     try {
-      responseChec.add(valueToSend);
-      responsePostProvider.addResponse( ResponsePost(
-        id: 0,
-        questionId: widget.qestion['id'],
-        responseVariantId: 0,
-        alternativeResponse: valueToSend,
-        commentary: '',
-        gradingType: widget.qestion['gradingType'].toInt(),
-        dateResponse: DateTime.now().toIso8601String(),
-      ));
-      print(responsePostProvider.responses.length);
+      responsePostProvider.addResponse(
+          ResponsePost(
+            id: 0,
+            questionId: widget.qestion['id'],
+            responseVariantId: 0,
+            alternativeResponse: responses[0],
+            commentary: '',
+            gradingType: widget.qestion['gradingType'].toInt(),
+            dateResponse: DateTime.now().toIso8601String(),
+          )
+      );
+      responsePostProvider.responses.forEach((element) {
+        print(element.alternativeResponse.toString());
+      });
+
     } catch (e) {
       print('Error sending response: $e');
     } finally {
@@ -428,7 +438,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
                           builder: (context) => const Questionnaires()),
                           (route) => false);
                   List<ResponsePost> allResponses = responsePostProvider.responses;
-                  print("PostRespons: ${allResponses.toString()}");
+                  print("PostRespons: ${responsePostProvider.responses.toString()}");
                   Map<String, dynamic> staticData = {
                     "oid": 0,
                     "questionnaireId": 0,
@@ -447,16 +457,14 @@ class _YesNoVariantState extends State<YesNoVariant> {
                       });
                       if (response.statusCode == 200) {
                         // Обработка успешного ответа от сервера
-                        print('Response sent successfully.');
                         multeAnsverVatinatResponse.clearResponseVariant();
                         yesAndNo.clearResponseVariant();
                         responsePostProvider.clearResponses();
+                        singleVatinatResponse.clearResponseVariant();
                       } else {
                         // Обработка ошибки
                         print('Failed to send response. Status code: ${response.statusCode}');
-                        multeAnsverVatinatResponse.clearResponseVariant();
-                        yesAndNo.clearResponseVariant();
-                        responsePostProvider.clearResponses();
+
                       }
                     } catch (e) {
                       // Обработка ошибок сети

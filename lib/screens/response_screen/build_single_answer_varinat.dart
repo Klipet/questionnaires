@@ -3,6 +3,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:questionnaires/save_response/single_variant_response.dart';
 import 'package:questionnaires/save_response/yes_no_variant.dart';
 import 'package:questionnaires/util/const_url.dart';
 import 'package:secure_shared_preferences/secure_shared_preferences.dart';
@@ -39,7 +40,7 @@ class SingleAnswerVariant extends StatefulWidget {
 
 class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
   late bool isCheckedList = false;
-  late List<dynamic> responseChec = [];
+  final List<dynamic> responseChec = [];
   int? selectedIndex;
 
   @override
@@ -51,21 +52,20 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
     super.initState();
   }
   void _loadSavedResponses() {
-    final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
-    List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
+    final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
+    List<int?>? savedResponses = singleVatinatResponse.getResponse();
     if (savedResponses != null && savedResponses.isNotEmpty) {
       setState(() {
         selectedIndex = savedResponses[0];
       });
-      print("Qestion response save : ${selectedIndex}");
     }
   }
 
   void _saveResponses() {
     if (selectedIndex != null) {
       List<int> selectedIndices = [selectedIndex!];
-      final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
-      multeAnsverVatinatResponse.addResponse(widget.index, selectedIndices);
+      final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
+      singleVatinatResponse.addResponse(selectedIndices);
     }
   }
 
@@ -373,77 +373,38 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
     var license = await shered.getString("licenseID");
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final singlVariantResponse = Provider.of<SingleVariantResponse>(context, listen: false);
     final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
-    if (responseChec.isEmpty) {
-      List<int>? savedResponses = multeAnsverVatinatResponse.getResponse(widget.index);
-      if (savedResponses != null && savedResponses.isNotEmpty) {
-        setState(() {
-          selectedIndex = savedResponses[0];
-          print("Qestion response save : ${savedResponses[0]}");
-          responseChec.add(savedResponses[0]);
-        });
-      }
-      print("Qestion add response : $responseChec");
-    }
-    var id = responseChec[0];
-    print("Qestion Map : ${responseChec}");
-// Получаем выбранные варианты ответов на основе isCheckedList
     try {
-      responsePostProvider.addResponse(ResponsePost(
-        id: 0,
-        questionId: widget.qestion['id'],
-        responseVariantId: id,
-        alternativeResponse: '',
-        commentary: '',
-        gradingType: widget.qestion['gradingType'].toInt(),
-        dateResponse: DateTime.now().toIso8601String(),
-      ));
-      print(responsePostProvider.responses.length);
-      //  var id = responseChec[0]['id'];
-      //  var responseVariantId = responseChec[0]['questionId'];
-      //  Map<String, dynamic> requestBody = {
-      //    'oid': 0,
-      //    'questionnaireId': widget.qestion['questionnaireId'],
-      //    'responses': [
-      //      {
-      //        'id': 0,
-      //        'questionId': responseVariantId.toInt(),
-      //        'responseVariantId': id.toInt(),
-      //        // Уточните, какой ID нужно использовать
-      //        'alternativeResponse': '',
-      //        // Объединяем выбранные варианты в строку
-      //        'comentary': '',
-      //        // Пустая строка, замените на комментарий, если необходимо
-      //        'gradingType': widget.qestion['gradingType'].toInt(),
-      //        // Уточните, какой тип оценки нужно использовать
-      //        'dateResponse': DateTime.now().toIso8601String(),
-      //        // Текущая дата и время
-      //      }
-      //    ],
-      //    'licenseId': license
-      //  };
-      //  // Отправляем POST-запрос на сервер
-      //  final String basicAuth =
-      //      'Basic ' + base64Encode(utf8.encode('$username:$password'));
-      //  Uri url = Uri.parse(postResponse); // Замените на ваш URL
-      //  try {
-      //    final response =
-      //        await http.post(url, body: jsonEncode(requestBody), headers: {
-      //      'Authorization': basicAuth,
-      //      "Accept": "application/json",
-      //      "content-type": "application/json"
-      //    });
-      //    if (response.statusCode == 200) {
-      //      // Обработка успешного ответа от сервера
-      //      print('Response sent successfully.');
-      //    } else {
-      //      // Обработка ошибки
-      //      print('Failed to send response. Status code: ${response.statusCode}');
-      //    }
-      //  } catch (e) {
-      //    // Обработка ошибок сети
-      //    print('Error sending response: $e');
-      //  }
+      if (responseChec.isNotEmpty){
+      var id = responseChec[0]['id'];
+      print("Qestion Map : ${responseChec}");
+        responsePostProvider.addResponse(
+            ResponsePost(
+          id: 0,
+          questionId: widget.qestion['id'],
+          responseVariantId: id.toInt(),
+          alternativeResponse: '',
+          commentary: '',
+          gradingType: widget.qestion['gradingType'].toInt(),
+          dateResponse: DateTime.now().toIso8601String(),
+        ));
+        print(responsePostProvider.responses);
+      }else{
+        var responseQestion = singlVariantResponse.responses[0];
+        responsePostProvider.addResponse(
+            ResponsePost(
+          id: 0,
+          questionId: widget.qestion['id'],
+          responseVariantId: responseQestion.toInt(),
+          alternativeResponse: '',
+          commentary: '',
+          gradingType: widget.qestion['gradingType'].toInt(),
+          dateResponse: DateTime.now().toIso8601String(),
+        )
+        );
+        print("Null save reqest: ${responseQestion.toString()}");
+      }
 
     } catch (e) {
       print('Error sending response: $e');
@@ -532,6 +493,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                           responsePostProvider.clearResponses();
                           multeAnsverVatinatResponse.clearResponseVariant();
                           yesAndNo.clearResponseVariant();
+                          singlVariantResponse.clearResponse();
                         } else {
                           // Обработка ошибки
                           print(
