@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:questionnaires/save_response/single_variant_response.dart';
 import 'package:questionnaires/screens/error_screen.dart';
 import 'package:questionnaires/screens/questionnaires.dart';
 import 'package:questionnaires/screens/response_screen/build_point_then_score.dart';
@@ -63,6 +64,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
     String count = questions.length.toString();
     final responsePostProvider = Provider.of<ResponsePostProvider>(context, listen: false);
     final multeAnsverVatinatResponse = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
+    final singleVatinatResponse = Provider.of<SingleVariantResponse>(context, listen: false);
     final yesAndNo = Provider.of<YesNoVariantResponse>(context, listen: false);
     return Scaffold(
         body: isLoading
@@ -168,6 +170,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                                         multeAnsverVatinatResponse.clearResponseVariant();
                                                         yesAndNo.clearResponseVariant();
                                                         responsePostProvider.clearResponses();
+                                                        singleVatinatResponse.clearResponseVariant();
                                                         Navigator.of(context).pushAndRemoveUntil(
                                                             MaterialPageRoute(
                                                                 builder: (context) => const Questionnaires()),

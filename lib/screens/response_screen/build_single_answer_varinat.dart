@@ -493,7 +493,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
                           responsePostProvider.clearResponses();
                           multeAnsverVatinatResponse.clearResponseVariant();
                           yesAndNo.clearResponseVariant();
-                          singlVariantResponse.clearResponse();
+                          singlVariantResponse.clearResponseVariant();
                         } else {
                           // Обработка ошибки
                           print(
