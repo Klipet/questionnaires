@@ -77,8 +77,8 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
 
     return Scaffold(
         body: Padding(
-      padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
-      child: Column(
+          padding: const EdgeInsets.only(left: 32, top: 30, right: 32),
+          child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -476,8 +476,7 @@ class _SingleAnswerVariantState extends State<SingleAnswerVariant> {
 
                       };
                       final String basicAuth =
-                          'Basic ${base64Encode(
-                          utf8.encode('$username:$password'))}';
+                          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
                       Uri url = Uri.parse(postResponse); // Замените на ваш URL
                       try {
                         final response =

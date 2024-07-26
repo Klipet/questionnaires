@@ -48,7 +48,7 @@ class _License extends State<License> {
           fontWeight: FontWeight.w600),
       decoration: BoxDecoration(
         border: Border.all(color: textColor),
-        color: questionsGroupColor,
+  //      color: questionsGroupColor,
         borderRadius: BorderRadius.circular(3),
       ));
 
@@ -141,7 +141,7 @@ class _License extends State<License> {
                                   fontWeight: FontWeight.w400)),
                             ],
                           ),
-                          Divider(
+                          const Divider(
                             color: birderDropDown,
                           )
                         ],
@@ -164,7 +164,7 @@ class _License extends State<License> {
                                   fontWeight: FontWeight.w400))
                             ],
                           ),
-                          Divider(
+                          const Divider(
                             color: birderDropDown,
                           )
                         ],

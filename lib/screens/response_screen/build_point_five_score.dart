@@ -98,7 +98,7 @@ class _PointFiveScoreState extends State<PointFiveScore> {
     return Scaffold(
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
-            padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
+            padding: const EdgeInsets.only(left: 32, top: 30, right: 32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,15 +126,20 @@ class _PointFiveScoreState extends State<PointFiveScore> {
         //const SizedBox(height: 110),
         Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(images.length, (index) {
                   int value = index + 1; // Определяем значение для каждой цифры (можете использовать что угодно)
                   return Padding(
                     padding: const EdgeInsets.only(right: 57),
-                      child: _buttonImages(index)
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 15),
+                        child: _buttonImages(index),
+                      )
                      // isCheckedList[index] ? Image.asset(selectedImages[index], fit: BoxFit.contain)
                      //     : Image.asset(images[index], fit: BoxFit.contain),
 

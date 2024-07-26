@@ -108,7 +108,7 @@ class _MulteAnsverVatinatState extends State<MulteAnsverVatinat> {
     final multeAnsverVatinatResponseRemove = Provider.of<MulteAnsverVatinatResponse>(context, listen: false);
     return Scaffold(
         body: Padding(
-      padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
+      padding: const EdgeInsets.only(left: 32, top: 30, right: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,

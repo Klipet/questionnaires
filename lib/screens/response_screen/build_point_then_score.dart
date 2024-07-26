@@ -81,7 +81,7 @@ class _PointThenScoreState extends State<PointThenScore> {
     return Scaffold(
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
-            padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
+            padding: const EdgeInsets.only(left: 32, top: 30, right: 32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,

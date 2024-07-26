@@ -89,7 +89,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
     return Scaffold(
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
-            padding: const EdgeInsets.only(left: 32, top: 48, right: 32),
+            padding: const EdgeInsets.only(left: 32, top: 30, right: 32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,7 +446,7 @@ class _YesNoVariantState extends State<YesNoVariant> {
                     "licenseId": license,
                   };
                   final String basicAuth =
-                       'Basic ' + base64Encode(utf8.encode('$username:$password'));
+                       'Basic ${base64Encode(utf8.encode('$username:$password'))}';
                     Uri url = Uri.parse(postResponse); // Замените на ваш URL
                     try {
                       final response =

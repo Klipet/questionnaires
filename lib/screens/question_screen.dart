@@ -302,10 +302,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
   Future<void> fetchQuestionnaires() async {
     var shered = await SecureSharedPref.getInstance();
     var license = await shered.getString("licenseID");
-    const String username = 'uSr_nps';
-    const String password = "V8-}W31S!l'D";
     final String basicAuth =
-        'Basic ' + base64Encode(utf8.encode('$username:$password'));
+        'Basic ${base64Encode(utf8.encode('$username:$password'))}';
     final response = await http.get(
         Uri.parse(urlQestions + license! + '&id=' + widget.oid.toString()),
         headers: <String, String>{'authorization': basicAuth});
